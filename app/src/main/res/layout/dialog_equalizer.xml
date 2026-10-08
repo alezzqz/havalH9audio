@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Диалог 6-полосного эквалайзера: пресеты + полосы + сброс -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_eq_content"
+    android:padding="36dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/equalizer_title"
+        android:textColor="?attr/paletteAccent"
+        android:textSize="32sp"
+        android:textStyle="bold" />
+
+    <!-- Пресеты -->
+    <LinearLayout
+        android:id="@+id/presetGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipFlat"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:checkable="false"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/preset_flat"
+            android:textSize="18sp"
+            app:chipStrokeColor="?attr/paletteAccent"
+            app:chipStrokeWidth="1dp"
+            android:layout_marginHorizontal="2dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipRock"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:checkable="false"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/preset_rock"
+            android:textSize="18sp"
+            app:chipStrokeColor="?attr/paletteAccent"
+            app:chipStrokeWidth="1dp"
+            android:layout_marginHorizontal="2dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMetal"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:checkable="false"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/preset_metal"
+            android:textSize="18sp"
+            app:chipStrokeColor="?attr/paletteAccent"
+            app:chipStrokeWidth="1dp"
+            android:layout_marginHorizontal="2dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipPop"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:checkable="false"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/preset_pop"
+            android:textSize="18sp"
+            app:chipStrokeColor="?attr/paletteAccent"
+            app:chipStrokeWidth="1dp"
+            android:layout_marginHorizontal="2dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipJazz"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:checkable="false"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/preset_jazz"
+            android:textSize="18sp"
+            app:chipStrokeColor="?attr/paletteAccent"
+            app:chipStrokeWidth="1dp"
+            android:layout_marginHorizontal="2dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipClassical"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:checkable="false"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/preset_classical"
+            android:textSize="18sp"
+            app:chipStrokeColor="?attr/paletteAccent"
+            app:chipStrokeWidth="1dp"
+            android:layout_marginHorizontal="2dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipBass"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:checkable="false"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/preset_bass"
+            android:textSize="18sp"
+            app:chipStrokeColor="?attr/paletteAccent"
+            app:chipStrokeWidth="1dp"
+            android:layout_marginHorizontal="2dp" />
+    </LinearLayout>
+
+    <!-- 6 вертикальных полос: 60 / 175 / 400 / 1k / 3.5k / 12k.
+         Веса: колонки поровну заполняют ширину окна — никакой обрезки крайних -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
+
+        <include
+            android:id="@+id/band1"
+            layout="@layout/item_equalizer_band"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <include
+            android:id="@+id/band2"
+            layout="@layout/item_equalizer_band"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <include
+            android:id="@+id/band3"
+            layout="@layout/item_equalizer_band"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <include
+            android:id="@+id/band4"
+            layout="@layout/item_equalizer_band"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <include
+            android:id="@+id/band5"
+            layout="@layout/item_equalizer_band"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <include
+            android:id="@+id/band6"
+            layout="@layout/item_equalizer_band"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <include
+            android:id="@+id/band7"
+            layout="@layout/item_equalizer_band"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <!-- Сброс -->
+    <TextView
+        android:id="@+id/btnReset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="24dp"
+        android:padding="12dp"
+        android:text="@string/eq_reset"
+        android:textColor="?attr/paletteAccent"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+</LinearLayout>

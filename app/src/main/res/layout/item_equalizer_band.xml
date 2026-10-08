@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Одна вертикальная полоса эквалайзера: частота + SeekBar (повёрнут на -90) + значение дБ -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/eq_column_width"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/bandLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/paletteTextSecondary"
+        android:textSize="22sp" />
+
+    <FrameLayout
+        android:layout_width="88dp"
+        android:layout_height="@dimen/eq_seek_h"
+        android:layout_marginTop="@dimen/space_12">
+
+        <SeekBar
+            android:id="@+id/bandSeek"
+            android:layout_width="@dimen/eq_seek_h"
+            android:layout_height="44dp"
+            android:layout_gravity="center"
+            android:maxHeight="44dp"
+            android:minHeight="44dp"
+            android:progressDrawable="@drawable/bg_seek_progress"
+            android:rotation="-90"
+            android:splitTrack="false"
+            android:thumb="@drawable/bg_seek_thumb" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/bandValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_12"
+        android:text="@string/band_0db"
+        android:textColor="?attr/paletteAccent"
+        android:textSize="22sp" />
+</LinearLayout>

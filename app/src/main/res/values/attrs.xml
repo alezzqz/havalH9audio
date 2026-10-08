@@ -1,0 +1,21 @@
+<resources>
+    <attr name="paletteIconBox" format="color" />
+    <attr name="paletteIconBoxActive" format="color" />
+    <attr name="paletteActiveRow" format="color" />
+    <attr name="paletteBackground" format="color" />
+    <attr name="palettePanel" format="color" />
+    <attr name="paletteNavBar" format="color" />
+    <attr name="paletteHomeButtonBg" format="color" />
+    <attr name="paletteAccent" format="color" />
+    <attr name="paletteAccentFaint" format="color" />
+    <attr name="paletteTextPrimary" format="color" />
+    <attr name="paletteTextSecondary" format="color" />
+    <attr name="paletteTextTertiary" format="color" />
+    <attr name="paletteIconPrimary" format="color" />
+    <attr name="paletteIconInactive" format="color" />
+    <attr name="paletteSeekTrack" format="color" />
+    <attr name="paletteBtnBg" format="color" />
+    <attr name="paletteBtnBorder" format="color" />
+    <attr name="paletteDivider" format="color" />
+    <attr name="palettePanelDivider" format="color" />
+</resources>

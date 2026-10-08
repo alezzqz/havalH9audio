@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Фон панелей -->
+    <color name="background">#0B0F12</color>
+    <color name="panel">#11161B</color>
+    <color name="nav_bar">#13181D</color>
+    <color name="home_button_bg">#1C2228</color>
+
+    <!-- Акцент (бирюзовый / teal) -->
+    <color name="accent">#00E5CC</color>
+    <color name="accent_faint">#1A00E5CC</color>
+
+    <!-- Текст -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#8B9B9E</color>
+    <color name="text_tertiary">#5C6B70</color>
+
+    <!-- Иконки -->
+    <color name="icon_primary">#FFFFFF</color>
+    <color name="icon_inactive">#6B7B80</color>
+
+    <!-- Прогресс-бар -->
+    <color name="seek_track">#2A343A</color>
+
+    <!-- Кнопки транспорта -->
+    <color name="btn_bg">#1A2026</color>
+    <color name="btn_border">#2A343A</color>
+
+    <!-- Разделители строк и панелей -->
+    <color name="divider">#232B31</color>
+    <color name="panel_divider">#5C6B70</color>
+</resources>

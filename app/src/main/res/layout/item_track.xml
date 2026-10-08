@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Элемент списка: папка или трек -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/track_row_height"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/list_padding_h"
+    android:paddingEnd="@dimen/list_padding_h">
+
+    <!-- Иконка в квадратном контейнере -->
+    <FrameLayout
+        android:id="@+id/rowIconContainer"
+        android:layout_width="@dimen/track_icon_size"
+        android:layout_height="@dimen/track_icon_size"
+        android:background="@drawable/bg_icon_box">
+
+        <ImageView
+            android:id="@+id/rowIcon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:scaleType="centerInside" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="16dp"
+        android:orientation="vertical">
+
+        <!-- Название (папка или трек) -->
+        <TextView
+            android:id="@+id/rowTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="?attr/paletteTextPrimary"
+            android:textSize="@dimen/track_title_size"
+            tools:text="01 - Speak to Me" />
+
+        <!-- Подпись для папок: "10 треков" -->
+        <TextView
+            android:id="@+id/rowSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="?attr/paletteTextSecondary"
+            android:textSize="@dimen/track_duration_size"
+            android:visibility="gone"
+            tools:text="10 треков"
+            tools:visibility="visible" />
+    </LinearLayout>
+
+    <!-- Длительность для треков -->
+    <TextView
+        android:id="@+id/rowDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:textColor="?attr/paletteTextSecondary"
+        android:textSize="@dimen/track_duration_size"
+        android:visibility="gone"
+        tools:text="1:05"
+        tools:visibility="visible" />
+
+    <!-- Меню (⋮) для треков -->
+    <ImageButton
+        android:id="@+id/rowMore"
+        android:layout_width="@dimen/track_more_size"
+        android:layout_height="@dimen/track_more_size"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_track_menu"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_more_vert" />
+
+    <!-- Стрелка (>) для папок -->
+    <ImageView
+        android:id="@+id/rowChevron"
+        android:layout_width="@dimen/track_more_size"
+        android:layout_height="@dimen/track_more_size"
+        android:contentDescription="@null"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_chevron_right"
+        android:visibility="gone"
+        tools:visibility="visible" />
+</LinearLayout>

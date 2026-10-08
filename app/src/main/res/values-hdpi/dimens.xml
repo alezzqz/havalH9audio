@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Копия базовых размеров для бакета hdpi (по ТЗ).
+         Фактическое устройство ~151 dpi соответствует mdpi, поэтому
+         реально применяться будет values/dimens.xml, не этот файл. -->
+
+    <dimen name="nav_bar_height">56dp</dimen>
+    <dimen name="home_button_size">56dp</dimen>
+    <dimen name="home_button_corner">12dp</dimen>
+    <dimen name="breadcrumb_text_size">18sp</dimen>
+    <dimen name="breadcrumb_gap">8dp</dimen>
+    <dimen name="nav_padding_h">24dp</dimen>
+
+    <dimen name="track_row_height">94dp</dimen>
+    <dimen name="track_icon_size">52dp</dimen>
+    <dimen name="track_title_size">28sp</dimen>
+    <dimen name="track_duration_size">23sp</dimen>
+    <dimen name="track_more_size">40dp</dimen>
+    <dimen name="list_padding_h">28dp</dimen>
+    <dimen name="list_padding_v">10dp</dimen>
+
+    <dimen name="divider_height">1dp</dimen>
+    <dimen name="divider_width">2dp</dimen>
+
+    <dimen name="cover_size">400dp</dimen>
+    <dimen name="cover_corner">16dp</dimen>
+    <dimen name="title_size">44sp</dimen>
+    <dimen name="artist_size">26sp</dimen>
+    <dimen name="album_size">22sp</dimen>
+    <dimen name="badge_width">150dp</dimen>
+    <dimen name="badge_height">48dp</dimen>
+    <dimen name="badge_text_size">22sp</dimen>
+    <dimen name="time_size">28sp</dimen>
+    <dimen name="btn_prev_size">180dp</dimen>
+    <dimen name="btn_play_size">207dp</dimen>
+    <dimen name="btn_next_size">180dp</dimen>
+    <dimen name="btn_small_size">100dp</dimen>
+    <dimen name="transport_gap">40dp</dimen>
+    <dimen name="small_gap">28dp</dimen>
+    <dimen name="icon_chevron">16dp</dimen>
+
+    <dimen name="eq_column_width">134dp</dimen>
+    <dimen name="eq_seek_h">340dp</dimen>
+
+    <dimen name="system_rail_inset">0dp</dimen>
+
+    <dimen name="space_8">8dp</dimen>
+    <dimen name="space_16">16dp</dimen>
+    <dimen name="space_32">32dp</dimen>
+</resources>

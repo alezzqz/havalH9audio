@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/paletteBackground"
+    tools:context=".MainActivity">
+
+    <!-- ================= ЛЕВАЯ ПАНЕЛЬ (навигация + список) ================= -->
+    <LinearLayout
+        android:id="@+id/leftPanel"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="?attr/palettePanel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/panelDivider">
+
+        <!-- Строка навигации: Home + хлебные крошки + настройки -->
+        <LinearLayout
+            android:id="@+id/navBar"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_bar_height"
+            android:orientation="horizontal"
+            android:background="?attr/paletteNavBar"
+            android:gravity="center_vertical"
+            android:paddingStart="@dimen/nav_padding_h"
+            android:paddingEnd="@dimen/nav_padding_h">
+
+            <ImageButton
+                android:id="@+id/homeBtn"
+                android:layout_width="@dimen/home_button_size"
+                android:layout_height="@dimen/home_button_size"
+                android:background="@drawable/bg_home_button"
+                android:contentDescription="@string/cd_home"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_home" />
+
+            <HorizontalScrollView
+                android:id="@+id/breadcrumbScroll"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:fillViewport="true"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/breadcrumbContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="@dimen/space_16"
+                    android:paddingEnd="@dimen/space_8" />
+            </HorizontalScrollView>
+
+            <ImageButton
+                android:id="@+id/settingsBtn"
+                android:layout_width="@dimen/home_button_size"
+                android:layout_height="@dimen/home_button_size"
+                android:layout_marginStart="@dimen/space_8"
+                android:background="@drawable/bg_small_button"
+                android:contentDescription="@string/cd_settings"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_settings" />
+        </LinearLayout>
+
+        <!-- Разделитель под навигационной строкой -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/divider_height"
+            android:layout_marginStart="@dimen/list_padding_h"
+            android:layout_marginEnd="@dimen/list_padding_h"
+            android:background="?attr/paletteDivider" />
+
+        <!-- Список -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/trackList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingStart="@dimen/list_padding_h"
+                android:paddingEnd="@dimen/list_padding_h"
+                android:paddingTop="@dimen/list_padding_v"
+                android:paddingBottom="@dimen/list_padding_v"
+                android:scrollbars="vertical" />
+
+            <TextView
+                android:id="@+id/stubNoUsb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/usb_not_found"
+                android:textColor="?attr/paletteTextSecondary"
+                android:textSize="28sp"
+                android:visibility="gone"
+                tools:visibility="visible" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- ================= ВЕРТИКАЛЬНЫЙ РАЗДЕЛИТЕЛЬ ПАНЕЛЕЙ ================= -->
+    <View
+        android:id="@+id/panelDivider"
+        android:layout_width="@dimen/divider_width"
+        android:layout_height="0dp"
+        android:layout_marginTop="@dimen/list_padding_h"
+        android:layout_marginBottom="@dimen/list_padding_h"
+        android:background="?attr/palettePanelDivider"
+        app:layout_constraintStart_toEndOf="@id/leftPanel"
+        app:layout_constraintEnd_toStartOf="@id/rightPanel"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- ================= ПРАВАЯ ПАНЕЛЬ (плеер) ================= -->
+    <LinearLayout
+        android:id="@+id/rightPanel"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:background="?attr/paletteBackground"
+        android:paddingStart="@dimen/space_32"
+        android:paddingEnd="@dimen/space_32"
+        android:paddingTop="@dimen/space_32"
+        android:paddingBottom="@dimen/space_32"
+        app:layout_constraintStart_toEndOf="@id/panelDivider"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Верхний блок: обложка + инфо -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Обложка -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/coverImage"
+                android:layout_width="@dimen/cover_size"
+                android:layout_height="@dimen/cover_size"
+                android:scaleType="centerCrop"
+                android:src="@drawable/default_cover"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Haval.Cover" />
+
+            <!-- Информация о треке -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="28dp"
+                android:orientation="vertical"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/trackArtist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/paletteTextSecondary"
+                    android:textSize="@dimen/artist_size"
+                    tools:text="Pink Floyd" />
+
+                <TextView
+                    android:id="@+id/trackTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:textColor="?attr/paletteTextPrimary"
+                    android:textSize="@dimen/title_size"
+                    android:textStyle="bold"
+                    tools:text="Time" />
+
+                <TextView
+                    android:id="@+id/trackAlbum"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:textColor="?attr/paletteTextSecondary"
+                    android:textSize="@dimen/album_size"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    tools:text="The Dark Side of the Moon" />
+
+                <!-- Бейдж формата -->
+                <TextView
+                    android:id="@+id/formatBadge"
+                    android:layout_width="@dimen/badge_width"
+                    android:layout_height="@dimen/badge_height"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/bg_format_badge"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:text=""
+                    android:textColor="?attr/paletteAccent"
+                    android:textSize="@dimen/badge_text_size"
+                    android:textStyle="bold" />
+
+                <!-- Время: текущее / общее -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/timeCurrent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="?attr/paletteAccent"
+                        android:textSize="@dimen/time_size"
+                        tools:text="1:37" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_8"
+                        android:layout_marginEnd="@dimen/space_8"
+                        android:text="@string/time_separator"
+                        android:textColor="?attr/paletteTextSecondary"
+                        android:textSize="@dimen/time_size" />
+
+                    <TextView
+                        android:id="@+id/timeTotal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="?attr/paletteTextSecondary"
+                        android:textSize="@dimen/time_size"
+                        tools:text="6:53" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Прогресс-бар -->
+        <SeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="1000"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:progressDrawable="@drawable/bg_seek_progress"
+            android:splitTrack="false"
+            android:thumb="@drawable/bg_seek_thumb" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Главный транспорт: Prev / Play / Next -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnPrev"
+                android:layout_width="@dimen/btn_prev_size"
+                android:layout_height="@dimen/btn_prev_size"
+                android:layout_marginEnd="@dimen/transport_gap"
+                android:background="@drawable/bg_circle_button"
+                android:contentDescription="@string/cd_prev_track"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_prev" />
+
+            <ImageButton
+                android:id="@+id/btnPlay"
+                android:layout_width="@dimen/btn_play_size"
+                android:layout_height="@dimen/btn_play_size"
+                android:background="@drawable/bg_play_button"
+                android:contentDescription="@string/cd_play_pause"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_play" />
+
+            <ImageButton
+                android:id="@+id/btnNext"
+                android:layout_width="@dimen/btn_next_size"
+                android:layout_height="@dimen/btn_next_size"
+                android:layout_marginStart="@dimen/transport_gap"
+                android:background="@drawable/bg_circle_button"
+                android:contentDescription="@string/cd_next_track"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_next" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Доп. кнопки: режим (послед. / случайный) / Playlist / EQ -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnSequential"
+                android:layout_width="@dimen/btn_small_size"
+                android:layout_height="@dimen/btn_small_size"
+                android:layout_marginEnd="@dimen/small_gap"
+                android:background="@drawable/bg_squircle_button"
+                android:contentDescription="@string/cd_playback_sequential"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_sequential"
+                app:tint="?attr/paletteIconPrimary" />
+
+            <ImageButton
+                android:id="@+id/btnShuffle"
+                android:layout_width="@dimen/btn_small_size"
+                android:layout_height="@dimen/btn_small_size"
+                android:layout_marginEnd="@dimen/small_gap"
+                android:background="@drawable/bg_squircle_button"
+                android:contentDescription="@string/cd_playback_shuffle"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_shuffle"
+                app:tint="?attr/paletteIconPrimary" />
+
+            <ImageButton
+                android:id="@+id/btnPlaylist"
+                android:layout_width="@dimen/btn_small_size"
+                android:layout_height="@dimen/btn_small_size"
+                android:layout_marginEnd="@dimen/small_gap"
+                android:background="@drawable/bg_squircle_button"
+                android:contentDescription="@string/cd_playlist"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_playlist"
+                app:tint="?attr/paletteIconPrimary" />
+
+            <ImageButton
+                android:id="@+id/btnEq"
+                android:layout_width="@dimen/btn_small_size"
+                android:layout_height="@dimen/btn_small_size"
+                android:background="@drawable/bg_squircle_button"
+                android:contentDescription="@string/equalizer_title"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_equalizer"
+                app:tint="?attr/paletteIconPrimary" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.5" />
+    </LinearLayout>
+
+    <!-- ================= SPLASH-ОВЕРЛЕЙ (показывается при старте) ================= -->
+    <FrameLayout
+        android:id="@+id/splashOverlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="?attr/paletteBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="100dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <!-- Название приложения -->
+            <TextView
+                android:id="@+id/splashTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.12"
+                android:text="@string/app_name"
+                android:textColor="?attr/paletteAccent"
+                android:textSize="64sp"
+                android:textStyle="bold" />
+
+            <!-- Подзаголовок -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:letterSpacing="0.25"
+                android:text="@string/splash_subtitle"
+                android:textColor="?attr/paletteTextTertiary"
+                android:textSize="18sp" />
+
+            <!-- Индикатор загрузки -->
+            <ProgressBar
+                android:id="@+id/splashProgress"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="56dp"
+                android:indeterminate="true"
+                android:indeterminateTint="?attr/paletteAccent" />
+
+            <!-- Статус (сканирование и т.п.) -->
+            <TextView
+                android:id="@+id/splashStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textColor="?attr/paletteTextSecondary"
+                android:textSize="16sp"
+                tools:text="Сканирование…" />
+        </LinearLayout>
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

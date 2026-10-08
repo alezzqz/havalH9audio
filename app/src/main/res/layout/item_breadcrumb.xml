@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Элемент хлебных крошек -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/breadcrumb_gap"
+    android:paddingEnd="@dimen/breadcrumb_gap">
+
+    <TextView
+        android:id="@+id/crumbText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/paletteTextSecondary"
+        android:textSize="@dimen/breadcrumb_text_size" />
+
+    <ImageView
+        android:id="@+id/chevron"
+        android:layout_width="@dimen/icon_chevron"
+        android:layout_height="@dimen/icon_chevron"
+        android:layout_marginStart="@dimen/breadcrumb_gap"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_chevron_right" />
+</LinearLayout>

@@ -1,0 +1,69 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Тёмная тема для головного устройства (всегда dark) -->
+    <style name="Base.Theme.HavalH9Music" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="paletteIconBox">#182026</item>
+        <item name="paletteIconBoxActive">#0E2D30</item>
+        <item name="paletteActiveRow">#0E2A2C</item>
+        <item name="paletteBackground">@color/background</item>
+        <item name="palettePanel">@color/panel</item>
+        <item name="paletteNavBar">@color/nav_bar</item>
+        <item name="paletteHomeButtonBg">@color/home_button_bg</item>
+        <item name="paletteAccent">@color/accent</item>
+        <item name="paletteAccentFaint">@color/accent_faint</item>
+        <item name="paletteTextPrimary">@color/text_primary</item>
+        <item name="paletteTextSecondary">@color/text_secondary</item>
+        <item name="paletteTextTertiary">@color/text_tertiary</item>
+        <item name="paletteIconPrimary">@color/icon_primary</item>
+        <item name="paletteIconInactive">@color/icon_inactive</item>
+        <item name="paletteSeekTrack">@color/seek_track</item>
+        <item name="paletteBtnBg">@color/btn_bg</item>
+        <item name="paletteBtnBorder">@color/btn_border</item>
+        <item name="paletteDivider">@color/divider</item>
+        <item name="palettePanelDivider">@color/panel_divider</item>
+        <item name="android:windowBackground">?attr/paletteBackground</item>
+        <item name="colorPrimary">?attr/paletteAccent</item>
+        <item name="colorOnPrimary">#001317</item>
+        <item name="colorSecondary">?attr/paletteAccent</item>
+        <item name="colorSurface">?attr/palettePanel</item>
+        <item name="colorOnSurface">?attr/paletteTextPrimary</item>
+        <item name="colorOnSurfaceVariant">?attr/paletteTextSecondary</item>
+        <item name="android:statusBarColor">?attr/paletteBackground</item>
+        <item name="android:navigationBarColor">?attr/paletteBackground</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">shortEdges</item>
+    </style>
+
+    <style name="Theme.HavalH9Music" parent="Base.Theme.HavalH9Music" />
+
+    <!-- Широкие диалоги для ГУ (эквалайзер): окно минимум 1080dp и без боковых
+         отступов Material, чтобы 6 полос по ~160dp помещались полностью -->
+    <style name="ThemeOverlay.HavalH9Music.EqDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:windowMinWidthMajor">1080dp</item>
+        <item name="android:windowMinWidthMinor">1080dp</item>
+        <item name="backgroundInsetStart">0dp</item>
+        <item name="backgroundInsetEnd">0dp</item>
+    </style>
+
+    <style name="Theme.HavalH9Music.Warm" parent="Theme.HavalH9Music">
+        <item name="paletteIconBox">#302219</item>
+        <item name="paletteIconBoxActive">#4A2C16</item>
+        <item name="paletteActiveRow">#3C2818</item>
+        <item name="paletteBackground">#15100D</item>
+        <item name="palettePanel">#211813</item>
+        <item name="paletteNavBar">#281D16</item>
+        <item name="paletteHomeButtonBg">#302219</item>
+        <item name="paletteAccent">#FF9B45</item>
+        <item name="paletteAccentFaint">#1AFF9B45</item>
+        <item name="paletteTextPrimary">#FFFFFF</item>
+        <item name="paletteTextSecondary">#BDA491</item>
+        <item name="paletteTextTertiary">#8A705C</item>
+        <item name="paletteIconPrimary">#FFFFFF</item>
+        <item name="paletteIconInactive">#A68A74</item>
+        <item name="paletteSeekTrack">#59402E</item>
+        <item name="paletteBtnBg">#302219</item>
+        <item name="paletteBtnBorder">#59402E</item>
+        <item name="paletteDivider">#3B2C22</item>
+        <item name="palettePanelDivider">#8A705C</item>
+        <item name="colorOnPrimary">#211005</item>
+    </style>
+</resources>

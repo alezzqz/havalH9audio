@@ -1,0 +1,7 @@
+<resources>
+
+    <style name="ShapeAppearance.Haval.Cover" parent="ShapeAppearance.Material3.Corner.Small">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/cover_corner</item>
+    </style>
+</resources>

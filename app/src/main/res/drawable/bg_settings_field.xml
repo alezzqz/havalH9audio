@@ -1,0 +1,7 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="?attr/paletteBtnBg" />
+    <stroke
+        android:width="@dimen/settings_field_border"
+        android:color="?attr/paletteBtnBorder" />
+    <corners android:radius="@dimen/settings_field_radius" />
+</shape>

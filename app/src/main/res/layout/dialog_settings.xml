@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_eq_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/settings_padding"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_title"
+            android:textColor="?attr/paletteAccent"
+            android:textSize="@dimen/settings_title_size"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_row_spacing"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="@dimen/settings_label_width"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_decoder"
+                android:textColor="?attr/paletteTextSecondary"
+                android:textSize="@dimen/settings_label_size" />
+
+            <Spinner
+                android:id="@+id/decoder"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="@dimen/settings_field_height"
+                android:spinnerMode="dropdown"
+                android:popupBackground="?attr/palettePanel"
+                android:backgroundTint="?attr/paletteAccent" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_row_spacing"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="@dimen/settings_label_width"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_panels"
+                android:textColor="?attr/paletteTextSecondary"
+                android:textSize="@dimen/settings_label_size" />
+
+            <Spinner
+                android:id="@+id/panels"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="@dimen/settings_field_height"
+                android:spinnerMode="dropdown"
+                android:popupBackground="?attr/palettePanel"
+                android:backgroundTint="?attr/paletteAccent" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_row_spacing"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="@dimen/settings_label_width"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_palette"
+                android:textColor="?attr/paletteTextSecondary"
+                android:textSize="@dimen/settings_label_size" />
+
+            <Spinner
+                android:id="@+id/palette"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="@dimen/settings_field_height"
+                android:spinnerMode="dropdown"
+                android:popupBackground="?attr/palettePanel"
+                android:backgroundTint="?attr/paletteAccent" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/refresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/settings_field_height"
+            android:layout_marginTop="@dimen/settings_row_spacing"
+            android:text="@string/settings_refresh"
+            android:textSize="@dimen/settings_control_size" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_row_spacing"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/cancel"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_cancel"
+                android:textSize="@dimen/settings_control_size" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/apply"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/settings_field_spacing"
+                android:text="@string/settings_apply"
+                android:textSize="@dimen/settings_control_size" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

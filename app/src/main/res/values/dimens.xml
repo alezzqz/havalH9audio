@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Экран 1920×1080 @ ~151 dpi -->
+
+    <!-- Строка навигации -->
+    <dimen name="nav_bar_height">52dp</dimen>
+    <dimen name="home_button_size">48dp</dimen>
+    <dimen name="home_button_corner">10dp</dimen>
+    <dimen name="breadcrumb_text_size">16sp</dimen>
+    <dimen name="breadcrumb_gap">6dp</dimen>
+    <dimen name="nav_padding_h">16dp</dimen>
+
+    <!-- Список треков -->
+    <dimen name="track_row_height">84dp</dimen>
+    <dimen name="track_icon_size">52dp</dimen>
+    <dimen name="track_title_size">26sp</dimen>
+    <dimen name="track_duration_size">21sp</dimen>
+    <dimen name="track_more_size">36dp</dimen>
+    <dimen name="list_padding_h">20dp</dimen>
+    <dimen name="list_padding_v">8dp</dimen>
+
+    <!-- Разделители: линии между строками и между панелями -->
+    <dimen name="divider_height">1dp</dimen>
+    <dimen name="divider_width">2dp</dimen>
+
+    <!-- Правая панель (всё крупно, чтобы заполнить пространство) -->
+    <dimen name="cover_size">400dp</dimen>
+    <dimen name="cover_corner">16dp</dimen>
+    <dimen name="title_size">44sp</dimen>
+    <dimen name="artist_size">26sp</dimen>
+    <dimen name="album_size">22sp</dimen>
+    <dimen name="badge_width">150dp</dimen>
+    <dimen name="badge_height">48dp</dimen>
+    <dimen name="badge_text_size">22sp</dimen>
+    <dimen name="time_size">28sp</dimen>
+    <dimen name="btn_prev_size">180dp</dimen>
+    <dimen name="btn_play_size">207dp</dimen>
+    <dimen name="btn_next_size">180dp</dimen>
+    <dimen name="btn_small_size">100dp</dimen>
+    <dimen name="transport_gap">40dp</dimen>
+    <dimen name="small_gap">28dp</dimen>
+    <dimen name="icon_chevron">14dp</dimen>
+
+    <!-- Эквалайзер -->
+    <dimen name="eq_column_width">134dp</dimen>
+    <dimen name="eq_seek_h">340dp</dimen>
+
+    <!-- Отступ под левую навигационную панель ГУ (0 = выключено).
+         Задаётся вручную, если панель ГУ рисуется поверх приложения
+         и не отдаётся системой как WindowInsets. -->
+    <dimen name="system_rail_inset">0dp</dimen>
+
+    <!-- Прочее -->
+    <dimen name="space_8">8dp</dimen>
+    <dimen name="space_12">12dp</dimen>
+    <dimen name="space_16">16dp</dimen>
+    <dimen name="space_32">32dp</dimen>
+    <dimen name="settings_padding">36dp</dimen>
+    <dimen name="settings_title_size">32sp</dimen>
+    <dimen name="settings_label_size">22sp</dimen>
+    <dimen name="settings_control_size">24sp</dimen>
+    <dimen name="settings_row_spacing">24dp</dimen>
+    <dimen name="settings_field_spacing">8dp</dimen>
+    <dimen name="settings_field_height">56dp</dimen>
+    <dimen name="settings_field_padding">16dp</dimen>
+    <dimen name="settings_field_radius">12dp</dimen>
+    <dimen name="settings_field_border">1dp</dimen>
+    <dimen name="settings_label_width">300dp</dimen>
+</resources>

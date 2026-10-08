@@ -1,0 +1,87 @@
+<resources>
+    <string name="app_name">Haval H9 Music</string>
+
+    <!-- Заставка -->
+    <string name="splash_subtitle">АУДИОПРОИГРЫВАТЕЛЬ</string>
+    <string name="splash_loading">Загрузка библиотеки…</string>
+
+    <!-- Служебные -->
+    <string name="usb_not_found">Подключите USB-накопитель</string>
+    <string name="root_label">USB</string>
+    <string name="ellipsis">…</string>
+
+    <!-- Выбор накопителя -->
+    <string name="usb_picker_title">Выберите USB-накопитель</string>
+    <string name="action_cancel">Отмена</string>
+
+    <!-- Сканирование -->
+    <string name="scanning_title">Сканирование USB-накопителя</string>
+    <string name="scan_progress">Найдено файлов: %1$d</string>
+    <string name="scan_done">Сканирование завершено (%1$d треков)</string>
+
+    <!-- Файл трека не найден (устаревший кеш / смена накопителя) -->
+    <string name="error_missing_file_title">Файл не найден</string>
+    <string name="error_missing_file_message">Не удалось найти файл трека «%1$s».\nПуть: %2$s\n\nВозможно, USB-накопитель заменён или файлы перемещены/удалены.</string>
+    <string name="action_rescan">Обновить библиотеку</string>
+    <string name="broken_cue">Повреждённый CUE-файл: %1$s. Трек воспроизводится целиком.</string>
+
+    <!-- Ошибка воспроизведения -->
+    <string name="playback_error_title">Ошибка воспроизведения</string>
+
+    <!-- Разрешения -->
+    <string name="permission_manage_title">Доступ к USB-флешке</string>
+    <string name="permission_manage_msg">Для чтения файлов с USB-накопителя приложению нужно разрешение «Доступ ко всем файлам» (All Files Access).</string>
+    <string name="permission_open_settings">Открыть настройки</string>
+    <string name="permission_later">Позже</string>
+    <string name="permission_needed_title">Нужен доступ к файлам</string>
+    <string name="permission_needed_msg">Без разрешения на доступ к файлам приложение не видит USB-накопитель и не может показать список источников.\n\nВыдайте разрешение в настройках или нажмите «Повторить».</string>
+    <string name="action_retry">Повторить</string>
+
+    <!-- Эквалайзер -->
+    <string name="equalizer_title">Эквалайзер</string>
+    <string name="eq_reset">Сброс</string>
+    <string name="preset_flat">Flat</string>
+    <string name="preset_rock">Rock</string>
+    <string name="preset_metal">Metal</string>
+    <string name="preset_pop">Pop</string>
+    <string name="preset_jazz">Jazz</string>
+    <string name="preset_classical">Classical</string>
+    <string name="preset_bass">Bass Boost</string>
+    <string name="gain_label">Усиление</string>
+    <string name="gain_off">Выкл</string>
+
+    <!-- Информация о треке -->
+    <string name="track_info_title">Информация о треке</string>
+    <string name="info_ok">OK</string>
+    <string name="info_path">Путь</string>
+    <string name="info_format">Формат</string>
+    <string name="info_size">Размер</string>
+    <string name="info_duration">Длительность</string>
+    <string name="info_cue">Купюра CUE</string>
+
+    <!-- Навигация, транспорт, элементы списка (contentDescription и подписи) -->
+    <string name="cd_home">Домой</string>
+    <string name="cd_prev_track">Предыдущий</string>
+    <string name="cd_play_pause">Воспроизвести</string>
+    <string name="cd_next_track">Следующий</string>
+    <string name="cd_playback_sequential">Последовательное воспроизведение</string>
+    <string name="cd_playback_shuffle">Случайное воспроизведение</string>
+    <string name="cd_playlist">Список</string>
+    <string name="cd_track_menu">Меню</string>
+    <string name="time_separator">/</string>
+    <string name="band_0db">0 dB</string>
+    <string name="playback_error_message">Не удалось воспроизвести трек. Проверьте доступность файла или выберите другой FLAC-декодер в настройках.</string>
+    <string name="cd_settings">Настройки</string>
+    <string name="settings_title">Настройки</string>
+    <string name="settings_decoder">FLAC-декодер</string>
+    <string name="settings_decoder_loading">Поиск декодеров…</string>
+    <string name="settings_panels">Расположение панелей</string>
+    <string name="settings_files_left">Список файлов слева</string>
+    <string name="settings_files_right">Список файлов справа</string>
+    <string name="settings_palette">Цветовая гамма</string>
+    <string name="settings_teal">Элитная</string>
+    <string name="settings_warm">Премиальная</string>
+    <string name="settings_refresh">Обновить библиотеку</string>
+    <string name="settings_apply">Применить</string>
+    <string name="settings_cancel">Отмена</string>
+</resources>

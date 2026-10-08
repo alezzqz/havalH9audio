@@ -1,0 +1,96 @@
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+// Параметры подписи release читаем из app/keystore.properties
+// (файл создаётся вместе с ключом; хранит storeFile/storePassword/keyAlias/keyPassword).
+def keystorePropertiesFile = rootProject.file("app/keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace 'com.tgraf.havalh9music'
+    // ГУ Haval — Android 9 (API 28): minSdk 28.
+    // targetSdk 33 оставлен: на API 28 поведение не меняет, а на Android 13+
+    // корректно запрашивает READ_MEDIA_AUDIO/POST_NOTIFICATIONS.
+    compileSdk 34
+
+    signingConfigs {
+        release {
+            storeFile file(keystoreProperties.getProperty("storeFile", "keystore/release.jks"))
+            storePassword keystoreProperties.getProperty("storePassword", "")
+            keyAlias keystoreProperties.getProperty("keyAlias", "haval")
+            keyPassword keystoreProperties.getProperty("keyPassword", "")
+        }
+    }
+
+    defaultConfig {
+        applicationId "com.tgraf.havalh9music"
+        minSdk 28
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            // AGP 9: вместо minifyEnabled/shrinkResources — optimization
+            optimization {
+                enable true
+            }
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // ГУ использует ARM: библиотеку libFLAC для эмулятора в release не включаем.
+            ndk {
+                abiFilters 'arm64-v8a', 'armeabi-v7a'
+            }
+        }
+        debug {
+            // libFLAC для ARM64/ARMv7 и x86/x86_64: одна debug-сборка для ГУ и эмулятора.
+        }
+    }
+
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+// Имя выходного APK: AGP 9 (новый DSL, android.newDsl=true) больше не даёт переименовать
+// output через android.applicationVariants, но имя файла собирается как
+// "<archivesName>-<buildType>.apk". Задаём archivesName явно — в build/outputs/apk сразу
+// лежит дистрибутивное имя HavalH9Music-v<version>-<buildType>.apk, и при копировании
+// в dist/ файл переименовывать не нужно.
+base {
+    archivesName = "HavalH9Music-v${android.defaultConfig.versionName}"
+}
+
+dependencies {
+    // Готовый Java-мост к libFLAC; нативные библиотеки находятся в jniLibs.
+    implementation files('libs/media3-flac-1.2.1.jar')
+    implementation libs.appcompat
+    implementation libs.core
+    implementation libs.material
+    implementation libs.constraintlayout
+    implementation libs.recyclerview
+    implementation libs.activity
+    implementation libs.lifecycle.viewmodel
+
+    // Медиа-движок: Media3 (ExoPlayer) + MediaSession
+    implementation libs.androidx.media3.exoplayer
+    implementation libs.androidx.media3.session
+
+    // Кэш иерархии флешки: Room (Java — annotationProcessor, без Kotlin/kapt)
+    implementation libs.room.runtime
+    annotationProcessor libs.room.compiler
+
+    testImplementation libs.junit
+}

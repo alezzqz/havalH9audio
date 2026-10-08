@@ -1,0 +1,30 @@
+[versions]
+agp = "9.4.1"
+junit = "4.13.2"
+# Версии библиотек подобраны под compileSdk 33 (Android 13)
+appcompat = "1.6.1"
+material = "1.9.0"
+activity = "1.7.2"
+constraintlayout = "2.1.4"
+recyclerview = "1.2.1"
+core = "1.10.1"
+lifecycle = "2.6.1"
+media3 = "1.2.1"
+room = "2.5.2"
+
+[libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+core = { group = "androidx.core", name = "core", version.ref = "core" }
+lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
