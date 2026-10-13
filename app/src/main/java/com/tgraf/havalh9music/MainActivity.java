@@ -80,6 +80,7 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    private static final long EQ_PRESET_SAVE_HOLD_MS = 2000L;
 
     private ActivityMainBinding b;
     private PlayerViewModel vm;
@@ -970,12 +971,75 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Чип пресета: клик применяет пресет, но сама кнопка остаётся неактивной.
+     * Клик применяет пресет, удержание 2 с перезаписывает его текущими полосами.
+     * Системный long click срабатывает раньше 2 с, поэтому используем свой таймер.
      */
+    // Lint ClickableViewAccessibility ругается на класс Chip (библиотечный View
+    // не переопределяет performClick), но здесь это ложное срабатывание: в
+    // ACTION_UP слушатель сам вызывает chip.performClick(), поэтому событие
+    // доступности приходит. Отдельный setOnLongClickListener не подходит —
+    // системный порог long press (~500 мс) срабатывает раньше нужных 2 с.
+    @SuppressLint("ClickableViewAccessibility")
     private void registerPresetChip(ItemEqualizerBandBinding[] bands, Chip chip) {
         chip.setOnClickListener(v -> {
             vm.getEqualizer().applyPreset(chip.getText().toString());
             syncEqFromManager(bands);
+        });
+        chip.setOnTouchListener(new View.OnTouchListener() {
+            private boolean saved;
+            private final Runnable savePreset = () -> {
+                if (!chip.isPressed() || !chip.isAttachedToWindow()) {
+                    return;
+                }
+                saved = true;
+                String name = chip.getText().toString();
+                vm.getEqualizer().savePreset(name);
+                Toast.makeText(MainActivity.this,
+                        getString(R.string.eq_preset_saved, name), Toast.LENGTH_SHORT).show();
+            };
+
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        saved = false;
+                        chip.setPressed(true);
+                        chip.postDelayed(savePreset, EQ_PRESET_SAVE_HOLD_MS);
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (event.getX() < 0 || event.getX() >= chip.getWidth()
+                                || event.getY() < 0 || event.getY() >= chip.getHeight()) {
+                            chip.removeCallbacks(savePreset);
+                            chip.setPressed(false);
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        chip.removeCallbacks(savePreset);
+                        boolean clicked = chip.isPressed() && !saved;
+                        chip.setPressed(false);
+                        if (clicked) {
+                            chip.performClick();
+                        }
+                        break;
+                    case MotionEvent.ACTION_CANCEL:
+                        chip.removeCallbacks(savePreset);
+                        chip.setPressed(false);
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
+        chip.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(@NonNull View view) {
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(@NonNull View view) {
+                chip.setPressed(false);
+            }
         });
     }
 

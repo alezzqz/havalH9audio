@@ -41,6 +41,7 @@
     <string name="equalizer_title">Эквалайзер</string>
     <string name="eq_reset">Сброс</string>
     <string name="preset_flat">Flat</string>
+    <string name="eq_preset_saved">Пресет «%1$s» сохранён</string>
     <string name="preset_rock">Rock</string>
     <string name="preset_metal">Metal</string>
     <string name="preset_pop">Pop</string>

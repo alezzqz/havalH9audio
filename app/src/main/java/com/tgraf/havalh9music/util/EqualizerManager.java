@@ -162,9 +162,26 @@ public class EqualizerManager {
         if (p == null) {
             return;
         }
-        System.arraycopy(p, 0, gains, 0, BAND_COUNT);
+        for (int i = 0; i < BAND_COUNT; i++) {
+            gains[i] = clamp(prefs.getFloat("preset_" + name + "_" + i, p[i]));
+        }
         applyAll();
         save();
+    }
+
+    /**
+     * Сохраняет отдельную копию текущих полос: дальнейшая настройка EQ
+     * не должна менять пресет, а перезапуск приложения — терять его.
+     */
+    public void savePreset(String name) {
+        if (!PRESETS.containsKey(name)) {
+            return;
+        }
+        SharedPreferences.Editor editor = prefs.edit();
+        for (int i = 0; i < BAND_COUNT; i++) {
+            editor.putFloat("preset_" + name + "_" + i, gains[i]);
+        }
+        editor.apply();
     }
 
     /**
