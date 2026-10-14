@@ -44,6 +44,12 @@
     <!-- Эквалайзер -->
     <dimen name="eq_column_width">134dp</dimen>
     <dimen name="eq_seek_h">340dp</dimen>
+    <dimen name="eq_padding">36dp</dimen>
+    <dimen name="eq_preset_text_size">18sp</dimen>
+    <dimen name="eq_chip_gap">2dp</dimen>
+    <dimen name="saved_volumes_list_height">360dp</dimen>
+    <dimen name="saved_volume_row_height">88dp</dimen>
+    <dimen name="saved_volume_text_size">20sp</dimen>
 
     <!-- Отступ под левую навигационную панель ГУ (0 = выключено).
          Задаётся вручную, если панель ГУ рисуется поверх приложения
@@ -66,4 +72,5 @@
     <dimen name="settings_field_radius">12dp</dimen>
     <dimen name="settings_field_border">1dp</dimen>
     <dimen name="settings_label_width">300dp</dimen>
+    <dimen name="settings_action_icon_size">24dp</dimen>
 </resources>

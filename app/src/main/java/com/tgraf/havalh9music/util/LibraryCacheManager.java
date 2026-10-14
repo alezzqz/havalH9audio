@@ -26,6 +26,7 @@ import android.util.Log;
 import com.tgraf.havalh9music.data.AppDatabase;
 import com.tgraf.havalh9music.model.LibraryRow;
 import com.tgraf.havalh9music.model.RootEntity;
+import com.tgraf.havalh9music.model.SavedVolume;
 import com.tgraf.havalh9music.model.TrackEntity;
 
 import java.io.File;
@@ -41,6 +42,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Кэширование иерархии флешки в Room + принудительное обновление.
@@ -109,7 +111,8 @@ public class LibraryCacheManager {
      * Запросы к Room — отдельный поток (не блокируются сканом).
      */
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
-    private volatile boolean cancelled;
+    private final AtomicInteger scanGeneration = new AtomicInteger();
+    private volatile String scanVolumeUuid;
 
     public LibraryCacheManager(Context context) {
         this.app = context.getApplicationContext();
@@ -300,17 +303,89 @@ public class LibraryCacheManager {
         });
     }
 
+    public void loadSavedRootsAsync(DbCallback<List<RootEntity>> cb) {
+        dbExecutor.submit(() -> {
+            try {
+                List<RootEntity> roots = db.rootDao().allRoots();
+                main.post(() -> cb.onResult(roots));
+            } catch (Exception e) {
+                Log.e(TAG, "Не удалось прочитать реестр накопителей", e);
+                main.post(() -> cb.onResult(null));
+            }
+        });
+    }
+
+    /**
+     * Барьер в потоке скана гарантирует, что его последние записи завершились
+     * ДО удаления. Старые задания и колбэки не оживят забытый накопитель.
+     */
+    public void deleteVolumeAsync(SavedVolume volume, DbCallback<Boolean> cb) {
+        if (volume.cacheUuids.contains(scanVolumeUuid)) {
+            scanGeneration.incrementAndGet();
+        }
+        scanExecutor.submit(() -> {
+            try {
+                db.runInTransaction(() -> {
+                    List<RootEntity> roots = db.rootDao().allRoots();
+                    Set<String> paths = new HashSet<>(volume.rootPaths);
+                    for (RootEntity root : roots) {
+                        if (volume.cacheUuids.contains(root.volumeUuid)) {
+                            paths.add(root.rootPath);
+                        }
+                    }
+                    for (String path : paths) {
+                        // Без UUID прошивка может повторно использовать /mnt/usb.
+                        // Старый реестр не даёт права стирать кэш другого тома.
+                        boolean otherOwner = false;
+                        for (RootEntity root : roots) {
+                            if (path.equals(root.rootPath)
+                                    && !volume.cacheUuids.contains(root.volumeUuid)) {
+                                otherOwner = true;
+                                break;
+                            }
+                        }
+                        if (!otherOwner) {
+                            db.trackDao().deleteUnderRoot(path);
+                        }
+                    }
+                    for (String uuid : volume.cacheUuids) {
+                        db.rootDao().deleteByUuid(uuid);
+                    }
+                });
+                // DELETE освобождает страницы только для повторного использования.
+                // VACUUM возвращает место файловой системе, включая забытые флешки.
+                db.getOpenHelper().getWritableDatabase().execSQL("VACUUM");
+                try (android.database.Cursor ignored = db.query(
+                        "PRAGMA wal_checkpoint(TRUNCATE)", null)) {
+                    ignored.moveToFirst();
+                }
+                main.post(() -> cb.onResult(true));
+            } catch (Exception e) {
+                Log.e(TAG, "Очистка накопителя не завершена", e);
+                main.post(() -> cb.onResult(false));
+            }
+        });
+    }
+
+    public void cancelScan() {
+        scanGeneration.incrementAndGet();
+    }
+
     /**
      * Запускает полное сканирование флешки.
      */
     public void scan(File root, ScanListener listener) {
-        cancelled = false;
-        scanExecutor.submit(() -> doScan(root, listener));
+        int generation = scanGeneration.incrementAndGet();
+        scanVolumeUuid = UsbStorageHelper.getVolumeUuid(root);
+        scanExecutor.submit(() -> doScan(root, listener, generation));
     }
 
     // ---------------------------------------------------------------------
 
-    private void doScan(File root, ScanListener listener) {
+    private void doScan(File root, ScanListener listener, int generation) {
+        if (generation != scanGeneration.get()) {
+            return;
+        }
         long t0 = System.currentTimeMillis();
         UsbSpeedSimulator.beginScan(app);
         try {
@@ -328,7 +403,10 @@ public class LibraryCacheManager {
 
             // 1) рекурсивно собираем все файлы
             List<File> all = new ArrayList<>();
-            collectFiles(root, all);
+            collectFiles(root, all, generation);
+            if (generation != scanGeneration.get()) {
+                return;
+            }
             int total = all.size();
             Log.i(TAG, "doScan: root=" + root.getAbsolutePath()
                     + " всего файлов=" + all.size());
@@ -350,6 +428,9 @@ public class LibraryCacheManager {
             // 3) парсим CUE (в т.ч. многодисковые): FLAC → виртуальные треки
             Map<String, List<CueSheetParser.CueTrack>> bySource = new HashMap<>();
             for (File cue : cues) {
+                if (generation != scanGeneration.get()) {
+                    return;
+                }
                 try {
                     List<CueSheetParser.CueTrack> tracks = CueSheetParser.parse(cue);
                     for (CueSheetParser.CueTrack ct : tracks) {
@@ -359,7 +440,7 @@ public class LibraryCacheManager {
                     Log.w(TAG, "Битый CUE: " + cue.getAbsolutePath(), e);
                     final String name = cue.getName();
                     main.post(() -> {
-                        if (listener != null) {
+                        if (listener != null && generation == scanGeneration.get()) {
                             listener.onBrokenCue(name);
                         }
                     });
@@ -383,12 +464,7 @@ public class LibraryCacheManager {
             int done = 0;
             int entityCount = 0;
             for (Map.Entry<String, List<File>> e : byDir.entrySet()) {
-                if (cancelled) {
-                    main.post(() -> {
-                        if (listener != null) {
-                            listener.onError("Сканирование отменено");
-                        }
-                    });
+                if (generation != scanGeneration.get()) {
                     return;
                 }
                 String dirAbs = e.getKey();
@@ -421,6 +497,12 @@ public class LibraryCacheManager {
                 }
                 List<TrackEntity> entities = new ArrayList<>();
                 for (Future<List<TrackEntity>> fut : futures) {
+                    if (generation != scanGeneration.get()) {
+                        for (Future<List<TrackEntity>> pending : futures) {
+                            pending.cancel(true);
+                        }
+                        return;
+                    }
                     try {
                         List<TrackEntity> got = fut.get();
                         if (got != null) {
@@ -432,6 +514,9 @@ public class LibraryCacheManager {
                 }
 
                 // 6) инкрементальная запись: перезаписываем только этот каталог
+                if (generation != scanGeneration.get()) {
+                    return;
+                }
                 db.trackDao().deleteInParent(dirAbs);
                 for (int i = 0; i < entities.size(); i += 500) {
                     db.trackDao()
@@ -444,26 +529,25 @@ public class LibraryCacheManager {
                     final int d = done;
                     final int t = total;
                     main.post(() -> {
-                        if (listener != null) {
+                        if (listener != null && generation == scanGeneration.get()) {
                             listener.onProgress(d, t);
                         }
                     });
                 }
             }
 
-            if (cancelled) {
-                main.post(() -> {
-                    if (listener != null) {
-                        listener.onError("Сканирование отменено");
-                    }
-                });
+            if (generation != scanGeneration.get()) {
                 return;
             }
 
             // 7) удаляем каталоги, которых больше нет на накопителе
             List<String> stale = db.trackDao().allParentPaths();
             for (String p : stale) {
-                if (!liveParents.contains(p)) {
+                if (generation != scanGeneration.get()) {
+                    return;
+                }
+                if (SoundProfileStore.relativeFolder(root, p) != null
+                        && !liveParents.contains(p)) {
                     db.trackDao().deleteInParent(p);
                 }
             }
@@ -483,14 +567,14 @@ public class LibraryCacheManager {
                     + " files=" + audio.size() + " rows=" + count
                     + " (готово за " + (System.currentTimeMillis() - t0) + " мс)");
             main.post(() -> {
-                if (listener != null) {
+                if (listener != null && generation == scanGeneration.get()) {
                     listener.onComplete(doneRoot, count);
                 }
             });
         } catch (Exception e) {
             Log.e(TAG, "Сканирование упало", e);
             main.post(() -> {
-                if (listener != null) {
+                if (listener != null && generation == scanGeneration.get()) {
                     listener.onError("Ошибка сканирования: " + e.getMessage());
                 }
             });
@@ -582,19 +666,25 @@ public class LibraryCacheManager {
         return tags.durationMs > 0 ? tags.durationMs : -1;
     }
 
-    private void collectFiles(File dir, List<File> out) {
+    private void collectFiles(File dir, List<File> out, int generation) {
+        if (generation != scanGeneration.get()) {
+            return;
+        }
         File[] kids = dir.listFiles();
         if (kids == null) {
             return; // нет прав (напр. Android/data) — пропускаем каталог
         }
         UsbSpeedSimulator.opDir();
         for (File k : kids) {
+            if (generation != scanGeneration.get()) {
+                return;
+            }
             if (k.isDirectory()) {
                 String n = k.getName();
                 if (n.startsWith(".")) {
                     continue; // скрытые каталоги пропускаем
                 }
-                collectFiles(k, out);
+                collectFiles(k, out, generation);
             } else {
                 out.add(k);
             }

@@ -147,7 +147,6 @@ public class EqualizerManager {
         }
         gains[index] = clamp(db);
         applyAll();
-        save();
     }
 
     public float getBand(int index) {
@@ -166,7 +165,6 @@ public class EqualizerManager {
             gains[i] = clamp(prefs.getFloat("preset_" + name + "_" + i, p[i]));
         }
         applyAll();
-        save();
     }
 
     /**
@@ -190,7 +188,24 @@ public class EqualizerManager {
     public void reset() {
         Arrays.fill(gains, 0f);
         applyAll();
-        save();
+    }
+
+    /**
+     * Профиль альбома меняет тракт, но не общие настройки: их хранит ViewModel.
+     * Применяем полосы одним вызовом, без промежуточных состояний и пересоздания EQ.
+     */
+    public void setGains(float[] values) {
+        if (values == null || values.length != BAND_COUNT) {
+            return;
+        }
+        for (int i = 0; i < BAND_COUNT; i++) {
+            gains[i] = clamp(values[i]);
+        }
+        applyAll();
+    }
+
+    public float[] getGains() {
+        return gains.clone();
     }
 
     /**
@@ -208,17 +223,6 @@ public class EqualizerManager {
                 }
             }
         }
-    }
-
-    private void save() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < BAND_COUNT; i++) {
-            if (i > 0) {
-                sb.append(',');
-            }
-            sb.append(gains[i]);
-        }
-        prefs.edit().putString(KEY_GAINS, sb.toString()).apply();
     }
 
     /**

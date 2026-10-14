@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_eq_content"
@@ -91,14 +92,107 @@
                 android:backgroundTint="?attr/paletteAccent" />
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/refresh"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="@dimen/settings_field_height"
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/settings_field_border"
             android:layout_marginTop="@dimen/settings_row_spacing"
-            android:text="@string/settings_refresh"
-            android:textSize="@dimen/settings_control_size" />
+            android:background="?attr/paletteBtnBorder" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_16"
+            android:text="@string/settings_equalizer_group"
+            android:textColor="?attr/paletteTextPrimary"
+            android:textSize="@dimen/settings_label_size"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_12"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/clearVolumeSounds"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="@dimen/settings_field_height"
+                android:text="@string/sound_delete_on_volume"
+                android:textColor="?attr/paletteTextPrimary"
+                android:textSize="@dimen/settings_label_size"
+                app:cornerRadius="@dimen/settings_field_radius"
+                app:strokeColor="?attr/paletteBtnBorder" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/clearFolderSounds"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_16"
+                android:layout_weight="1"
+                android:minHeight="@dimen/settings_field_height"
+                android:text="@string/sound_delete_all"
+                android:textColor="?attr/paletteTextPrimary"
+                android:textSize="@dimen/settings_label_size"
+                app:cornerRadius="@dimen/settings_field_radius"
+                app:strokeColor="?attr/paletteBtnBorder" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/settings_field_border"
+            android:layout_marginTop="@dimen/settings_row_spacing"
+            android:background="?attr/paletteBtnBorder" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_16"
+            android:text="@string/settings_library_group"
+            android:textColor="?attr/paletteTextPrimary"
+            android:textSize="@dimen/settings_label_size"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_12"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/refresh"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="@dimen/settings_field_height"
+                android:text="@string/settings_refresh"
+                android:textColor="?attr/paletteTextPrimary"
+                android:textSize="@dimen/settings_label_size"
+                app:cornerRadius="@dimen/settings_field_radius"
+                app:icon="@drawable/ic_refresh"
+                app:iconGravity="textStart"
+                app:iconSize="@dimen/settings_action_icon_size"
+                app:iconTint="?attr/paletteAccent"
+                app:strokeColor="?attr/paletteBtnBorder" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/savedVolumes"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_16"
+                android:layout_weight="1"
+                android:minHeight="@dimen/settings_field_height"
+                android:text="@string/settings_clear_volume"
+                android:textColor="?attr/paletteTextPrimary"
+                android:textSize="@dimen/settings_label_size"
+                app:cornerRadius="@dimen/settings_field_radius"
+                app:strokeColor="?attr/paletteBtnBorder" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

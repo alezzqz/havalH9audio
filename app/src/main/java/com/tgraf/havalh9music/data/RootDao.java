@@ -25,6 +25,8 @@ import androidx.room.Query;
 
 import com.tgraf.havalh9music.model.RootEntity;
 
+import java.util.List;
+
 @Dao
 public interface RootDao {
 
@@ -36,4 +38,10 @@ public interface RootDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void upsert(RootEntity root);
+
+    @Query("SELECT * FROM root ORDER BY scannedAt DESC")
+    List<RootEntity> allRoots();
+
+    @Query("DELETE FROM root WHERE volumeUuid = :uuid")
+    void deleteByUuid(String uuid);
 }

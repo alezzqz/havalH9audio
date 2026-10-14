@@ -87,7 +87,6 @@ public class LoudnessManager {
      */
     public void setGainDb(float db) {
         gainDb = clamp(db);
-        save();
         sync();
     }
 
@@ -137,10 +136,6 @@ public class LoudnessManager {
 
     private void load() {
         gainDb = clamp(prefs.getFloat(KEY_GAIN, 0f));
-    }
-
-    private void save() {
-        prefs.edit().putFloat(KEY_GAIN, gainDb).apply();
     }
 
     private static float clamp(float db) {

@@ -32,6 +32,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -223,6 +224,33 @@ public final class UsbStorageHelper {
             }
         }
         return "usb_" + Math.abs(abs.hashCode());
+    }
+
+    /**
+     * Для пользовательских профилей нужен UUID самого тома, а не хэш точки
+     * монтирования. Старый ключ кэша не меняем: иначе потеряем уже сохранённую
+     * библиотеку. При отсутствии UUID резервный ключ честно привязан к пути.
+     */
+    public static String getSoundVolumeId(Context context, File root) {
+        if (root == null) {
+            return "";
+        }
+        try {
+            StorageManager manager = context.getSystemService(StorageManager.class);
+            StorageVolume volume = manager == null ? null : manager.getStorageVolume(root);
+            if (volume != null && volume.getUuid() != null && !volume.getUuid().isEmpty()) {
+                return "uuid:" + volume.getUuid().toLowerCase(Locale.ROOT);
+            }
+        } catch (Exception ignored) {
+            // Прошивки ГУ могут не отдавать том даже при читаемом /storage/UUID.
+        }
+        String name = root.getName();
+        String abs = root.getAbsolutePath();
+        if ((abs.startsWith("/storage/") || abs.startsWith("/mnt/media_rw/"))
+                && name.matches("(?i)[0-9a-f]{4}-[0-9a-f]{4}")) {
+            return "uuid:" + name.toLowerCase(Locale.ROOT);
+        }
+        return "path:" + root.toPath().toAbsolutePath().normalize();
     }
 
 }

@@ -50,14 +50,17 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.tgraf.havalh9music.databinding.ActivityMainBinding;
 import com.tgraf.havalh9music.databinding.DialogEqualizerBinding;
 import com.tgraf.havalh9music.databinding.DialogSettingsBinding;
+import com.tgraf.havalh9music.databinding.DialogSavedVolumesBinding;
 import com.tgraf.havalh9music.databinding.ItemEqualizerBandBinding;
 import com.tgraf.havalh9music.model.LibraryRow;
+import com.tgraf.havalh9music.model.SavedVolume;
 import com.tgraf.havalh9music.model.TrackEntity;
 import com.tgraf.havalh9music.model.UsbDevice;
 import com.tgraf.havalh9music.ui.BreadcrumbAdapter;
@@ -174,7 +177,33 @@ public class MainActivity extends AppCompatActivity {
             dialog.getWindow().setBackgroundDrawable(
                     AppCompatResources.getDrawable(this, R.drawable.bg_eq_window));
         }
-        dialog.setOnDismissListener(ignored -> settingsBinding = null);
+        Runnable updateActions = () -> {
+            boolean enabled = vm.isSoundReady()
+                    && !Boolean.TRUE.equals(vm.getDataBusy().getValue());
+            settings.refresh.setEnabled(enabled);
+            settings.savedVolumes.setEnabled(enabled);
+            settings.clearVolumeSounds.setEnabled(enabled);
+            settings.clearFolderSounds.setEnabled(enabled);
+        };
+        Observer<Boolean> busyObserver = ignored -> updateActions.run();
+        Observer<Integer> soundObserver = ignored -> updateActions.run();
+        vm.getDataBusy().observe(this, busyObserver);
+        vm.getSoundRevision().observe(this, soundObserver);
+        dialog.setOnDismissListener(ignored -> {
+            settingsBinding = null;
+            vm.getDataBusy().removeObserver(busyObserver);
+            vm.getSoundRevision().removeObserver(soundObserver);
+        });
+        settings.savedVolumes.setOnClickListener(v -> showSavedVolumesDialog(false));
+        settings.clearVolumeSounds.setOnClickListener(v -> showSavedVolumesDialog(true));
+        settings.clearFolderSounds.setOnClickListener(v ->
+                new MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_HavalH9Music_EqDialog)
+                        .setTitle(R.string.sound_clear_all)
+                        .setMessage(R.string.sound_clear_confirm)
+                        .setNegativeButton(R.string.action_cancel, null)
+                        .setPositiveButton(R.string.action_delete,
+                                (confirmation, which) -> vm.clearAllFolderSounds())
+                        .show());
         settings.cancel.setOnClickListener(v -> dialog.dismiss());
         settings.refresh.setOnClickListener(v -> {
             dialog.dismiss();
@@ -213,6 +242,84 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         dialog.show();
+    }
+
+    private void showSavedVolumesDialog(boolean soundOnly) {
+        DialogSavedVolumesBinding saved = DialogSavedVolumesBinding.inflate(getLayoutInflater());
+        saved.title.setText(soundOnly ? R.string.sound_volume_picker_title
+                : R.string.saved_volumes_title);
+        final int pickerHint = soundOnly ? R.string.sound_volume_picker_hint
+                : R.string.saved_volumes_hint;
+        List<SavedVolume> volumes = new ArrayList<>();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.item_saved_volume,
+                new ArrayList<>());
+        saved.volumes.setAdapter(adapter);
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this,
+                R.style.ThemeOverlay_HavalH9Music_EqDialog).setView(saved.getRoot())
+                .setNegativeButton(R.string.action_close, null).create();
+        Observer<List<SavedVolume>> volumeObserver = list -> {
+            volumes.clear();
+            adapter.clear();
+            if (list == null) {
+                saved.status.setText(R.string.saved_volumes_loading);
+                saved.volumes.setEnabled(false);
+                return;
+            }
+            volumes.addAll(list);
+            for (SavedVolume volume : list) {
+                String identity = volume.id;
+                if (identity.startsWith("path:")) {
+                    identity += "\n" + getString(R.string.volume_path_identity);
+                }
+                adapter.add(getString(R.string.saved_volume_row, volume.label,
+                        getString(volume.connected ? R.string.volume_connected
+                                : R.string.volume_disconnected), identity));
+            }
+            saved.status.setText(list.isEmpty() ? R.string.saved_volumes_empty
+                    : pickerHint);
+            saved.volumes.setEnabled(!Boolean.TRUE.equals(vm.getDataBusy().getValue()));
+        };
+        Observer<Boolean> busyObserver = busy -> {
+            boolean working = Boolean.TRUE.equals(busy);
+            saved.volumes.setEnabled(!working && vm.getSavedVolumes().getValue() != null);
+            if (working) {
+                saved.status.setText(soundOnly ? R.string.sound_profiles_deleting
+                        : R.string.volume_deleting);
+            } else if (vm.getSavedVolumes().getValue() != null) {
+                saved.status.setText(volumes.isEmpty() ? R.string.saved_volumes_empty
+                        : pickerHint);
+            }
+        };
+        saved.volumes.setOnItemClickListener((parent, view, position, id) -> {
+            if (Boolean.TRUE.equals(vm.getDataBusy().getValue()) || position >= volumes.size()) {
+                return;
+            }
+            SavedVolume volume = volumes.get(position);
+            new MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_HavalH9Music_EqDialog)
+                    .setTitle(soundOnly ? R.string.sound_volume_delete_title
+                            : R.string.volume_delete_title)
+                    .setMessage(soundOnly ? getString(R.string.sound_volume_delete_confirm,
+                            volume.label) : getString(R.string.volume_delete_confirm,
+                            volume.label, volume.id))
+                    .setNegativeButton(R.string.action_cancel, null)
+                    .setPositiveButton(R.string.action_delete,
+                            (confirmation, which) -> {
+                                if (soundOnly) {
+                                    vm.clearFolderSounds(volume);
+                                } else {
+                                    vm.forgetVolume(volume);
+                                }
+                            })
+                    .show();
+        });
+        vm.getSavedVolumes().observe(this, volumeObserver);
+        vm.getDataBusy().observe(this, busyObserver);
+        dialog.setOnDismissListener(ignored -> {
+            vm.getSavedVolumes().removeObserver(volumeObserver);
+            vm.getDataBusy().removeObserver(busyObserver);
+        });
+        dialog.show();
+        vm.loadSavedVolumes();
     }
 
     // Runtime-разрешения: Android 13+ — READ_MEDIA_AUDIO + POST_NOTIFICATIONS,
@@ -871,12 +978,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showEqualizerDialog() {
-        // Привязка к текущей аудио-сессии (если PLAYBACK был READY ещё до открытия
-        // диалога и событие attach могло не прийти). Если эффект уже в тракте,
-        // ensureAttached ничего не пересоздаёт — открытие окна бесшумно.
-        vm.getEqualizer().ensureAttached(MusicService.getAudioSessionId());
-        vm.getLoudness().ensureAttached(MusicService.getAudioSessionId());
-
         DialogEqualizerBinding eq = DialogEqualizerBinding.inflate(getLayoutInflater());
 
         final String[] labels = {"60", "175", "400", "1k", "3.5k", "12k"};
@@ -892,22 +993,30 @@ public class MainActivity extends AppCompatActivity {
             bb.bandSeek.setProgress(Math.round(g) + 15);
             bb.bandValue.setText(String.format(Locale.US, "%+.0f dB", g));
             bb.bandSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                private String soundContext;
+
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     if (!fromUser) {
                         return;
                     }
+                    if (soundContext != null
+                            && !soundContext.equals(vm.getSoundContextToken())) {
+                        return;
+                    }
                     float db = progress - 15f;
                     bb.bandValue.setText(String.format(Locale.US, "%+.0f dB", db));
-                    vm.getEqualizer().setBand(idx, db);
+                    vm.setSoundBand(idx, db);
                 }
 
                 @Override
                 public void onStartTrackingTouch(SeekBar seekBar) {
+                    soundContext = vm.getSoundContextToken();
                 }
 
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {
+                    soundContext = null;
                 }
             });
         }
@@ -919,21 +1028,28 @@ public class MainActivity extends AppCompatActivity {
         gain.bandSeek.setProgress(Math.round(vm.getLoudness().getGainDb()));
         updateGainValue(gain);
         gain.bandSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            private String soundContext;
+
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 updateGainValue(gain);
                 if (!fromUser) {
                     return;
                 }
-                vm.getLoudness().setGainDb(progress);
+                if (soundContext != null && !soundContext.equals(vm.getSoundContextToken())) {
+                    return;
+                }
+                vm.setSoundGain(progress);
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
+                soundContext = vm.getSoundContextToken();
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                soundContext = null;
             }
         });
 
@@ -955,7 +1071,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         eq.btnReset.setOnClickListener(v -> {
-            vm.getEqualizer().reset();
+            vm.resetSoundBands();
             syncEqFromManager(bands);
         });
         // Чипы пресетов не имеют состояния «активен»: клик лишь применяет пресет.
@@ -966,6 +1082,41 @@ public class MainActivity extends AppCompatActivity {
         registerPresetChip(bands, eq.chipJazz);
         registerPresetChip(bands, eq.chipClassical);
         registerPresetChip(bands, eq.chipBass);
+
+        final boolean[] syncing = {false};
+        Runnable syncSound = () -> {
+            syncing[0] = true;
+            eq.folderSound.setChecked(vm.isFolderSoundEnabled());
+            eq.folderSound.setEnabled(vm.canBindFolderSound());
+            syncEqFromManager(bands);
+            gain.bandSeek.setProgress(Math.round(vm.getLoudness().getGainDb()));
+            updateGainValue(gain);
+            boolean enabled = vm.isSoundReady()
+                    && !Boolean.TRUE.equals(vm.getDataBusy().getValue());
+            for (ItemEqualizerBandBinding band : bands) {
+                band.bandSeek.setEnabled(enabled);
+            }
+            gain.bandSeek.setEnabled(enabled);
+            eq.btnReset.setEnabled(enabled);
+            for (Chip chip : new Chip[]{eq.chipFlat, eq.chipRock, eq.chipMetal, eq.chipPop,
+                    eq.chipJazz, eq.chipClassical, eq.chipBass}) {
+                chip.setEnabled(enabled);
+            }
+            syncing[0] = false;
+        };
+        eq.folderSound.setOnCheckedChangeListener((button, checked) -> {
+            if (!syncing[0]) {
+                vm.setFolderSoundEnabled(checked);
+            }
+        });
+        Observer<Integer> soundObserver = ignored -> syncSound.run();
+        Observer<Boolean> busyObserver = ignored -> syncSound.run();
+        vm.getSoundRevision().observe(this, soundObserver);
+        vm.getDataBusy().observe(this, busyObserver);
+        dialog.setOnDismissListener(ignored -> {
+            vm.getSoundRevision().removeObserver(soundObserver);
+            vm.getDataBusy().removeObserver(busyObserver);
+        });
 
         dialog.show();
     }
@@ -982,13 +1133,15 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("ClickableViewAccessibility")
     private void registerPresetChip(ItemEqualizerBandBinding[] bands, Chip chip) {
         chip.setOnClickListener(v -> {
-            vm.getEqualizer().applyPreset(chip.getText().toString());
+            vm.applySoundPreset(chip.getText().toString());
             syncEqFromManager(bands);
         });
         chip.setOnTouchListener(new View.OnTouchListener() {
             private boolean saved;
+            private String soundContext;
             private final Runnable savePreset = () -> {
-                if (!chip.isPressed() || !chip.isAttachedToWindow()) {
+                if (!chip.isEnabled() || !chip.isPressed() || !chip.isAttachedToWindow()
+                        || !java.util.Objects.equals(soundContext, vm.getSoundContextToken())) {
                     return;
                 }
                 saved = true;
@@ -1003,6 +1156,7 @@ public class MainActivity extends AppCompatActivity {
                 switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
                         saved = false;
+                        soundContext = vm.getSoundContextToken();
                         chip.setPressed(true);
                         chip.postDelayed(savePreset, EQ_PRESET_SAVE_HOLD_MS);
                         break;
@@ -1015,7 +1169,8 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case MotionEvent.ACTION_UP:
                         chip.removeCallbacks(savePreset);
-                        boolean clicked = chip.isPressed() && !saved;
+                        boolean clicked = chip.isPressed() && !saved
+                                && java.util.Objects.equals(soundContext, vm.getSoundContextToken());
                         chip.setPressed(false);
                         if (clicked) {
                             chip.performClick();

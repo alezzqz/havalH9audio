@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/settings_padding"
+    android:background="@drawable/bg_eq_content">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/saved_volumes_title"
+        android:textColor="?attr/paletteAccent"
+        android:textSize="@dimen/settings_title_size"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_12"
+        android:text="@string/saved_volumes_loading"
+        android:textColor="?attr/paletteTextSecondary"
+        android:textSize="@dimen/settings_label_size" />
+
+    <ListView
+        android:id="@+id/volumes"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/saved_volumes_list_height"
+        android:layout_marginTop="@dimen/space_16"
+        android:dividerHeight="@dimen/space_8" />
+</LinearLayout>

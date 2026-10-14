@@ -33,14 +33,19 @@ public interface TrackDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAll(List<TrackEntity> tracks);
 
-    @Query("DELETE FROM tracks")
-    void clearAll();
-
     /**
      * Удаляет треки каталога (инкрементальная перезапись при скане).
      */
     @Query("DELETE FROM tracks WHERE parentPath = :dir")
     void deleteInParent(String dir);
+
+    /**
+     * Граница '/' исключает соседний том с похожим префиксом; substr, в отличие
+     * от LIKE, не считает символы '%' и '_' в пути шаблоном.
+     */
+    @Query("DELETE FROM tracks WHERE parentPath = :root "
+            + "OR substr(parentPath, 1, length(:root) + 1) = :root || '/'")
+    void deleteUnderRoot(String root);
 
     /**
      * Треки в указанном каталоге.

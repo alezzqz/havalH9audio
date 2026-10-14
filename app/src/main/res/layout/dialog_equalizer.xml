@@ -1,27 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Диалог 6-полосного эквалайзера: пресеты + полосы + сброс -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@drawable/bg_eq_content"
-    android:padding="36dp">
+    android:fillViewport="true"
+    android:background="@drawable/bg_eq_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/eq_padding">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/equalizer_title"
         android:textColor="?attr/paletteAccent"
-        android:textSize="32sp"
+        android:textSize="@dimen/settings_title_size"
         android:textStyle="bold" />
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/folderSound"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_12"
+        android:text="@string/sound_bind_folder"
+        android:textColor="?attr/paletteTextPrimary"
+        android:textSize="@dimen/settings_label_size" />
 
     <!-- Пресеты -->
     <LinearLayout
         android:id="@+id/presetGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="@dimen/settings_row_spacing"
         android:orientation="horizontal">
 
         <com.google.android.material.chip.Chip
@@ -33,10 +47,10 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="@string/preset_flat"
-            android:textSize="18sp"
+            android:textSize="@dimen/eq_preset_text_size"
             app:chipStrokeColor="?attr/paletteAccent"
-            app:chipStrokeWidth="1dp"
-            android:layout_marginHorizontal="2dp" />
+            app:chipStrokeWidth="@dimen/settings_field_border"
+            android:layout_marginHorizontal="@dimen/eq_chip_gap" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipRock"
@@ -47,10 +61,10 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="@string/preset_rock"
-            android:textSize="18sp"
+            android:textSize="@dimen/eq_preset_text_size"
             app:chipStrokeColor="?attr/paletteAccent"
-            app:chipStrokeWidth="1dp"
-            android:layout_marginHorizontal="2dp" />
+            app:chipStrokeWidth="@dimen/settings_field_border"
+            android:layout_marginHorizontal="@dimen/eq_chip_gap" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipMetal"
@@ -61,10 +75,10 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="@string/preset_metal"
-            android:textSize="18sp"
+            android:textSize="@dimen/eq_preset_text_size"
             app:chipStrokeColor="?attr/paletteAccent"
-            app:chipStrokeWidth="1dp"
-            android:layout_marginHorizontal="2dp" />
+            app:chipStrokeWidth="@dimen/settings_field_border"
+            android:layout_marginHorizontal="@dimen/eq_chip_gap" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipPop"
@@ -75,10 +89,10 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="@string/preset_pop"
-            android:textSize="18sp"
+            android:textSize="@dimen/eq_preset_text_size"
             app:chipStrokeColor="?attr/paletteAccent"
-            app:chipStrokeWidth="1dp"
-            android:layout_marginHorizontal="2dp" />
+            app:chipStrokeWidth="@dimen/settings_field_border"
+            android:layout_marginHorizontal="@dimen/eq_chip_gap" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipJazz"
@@ -89,10 +103,10 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="@string/preset_jazz"
-            android:textSize="18sp"
+            android:textSize="@dimen/eq_preset_text_size"
             app:chipStrokeColor="?attr/paletteAccent"
-            app:chipStrokeWidth="1dp"
-            android:layout_marginHorizontal="2dp" />
+            app:chipStrokeWidth="@dimen/settings_field_border"
+            android:layout_marginHorizontal="@dimen/eq_chip_gap" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipClassical"
@@ -103,10 +117,10 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="@string/preset_classical"
-            android:textSize="18sp"
+            android:textSize="@dimen/eq_preset_text_size"
             app:chipStrokeColor="?attr/paletteAccent"
-            app:chipStrokeWidth="1dp"
-            android:layout_marginHorizontal="2dp" />
+            app:chipStrokeWidth="@dimen/settings_field_border"
+            android:layout_marginHorizontal="@dimen/eq_chip_gap" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipBass"
@@ -117,10 +131,10 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="@string/preset_bass"
-            android:textSize="18sp"
+            android:textSize="@dimen/eq_preset_text_size"
             app:chipStrokeColor="?attr/paletteAccent"
-            app:chipStrokeWidth="1dp"
-            android:layout_marginHorizontal="2dp" />
+            app:chipStrokeWidth="@dimen/settings_field_border"
+            android:layout_marginHorizontal="@dimen/eq_chip_gap" />
     </LinearLayout>
 
     <!-- 6 вертикальных полос: 60 / 175 / 400 / 1k / 3.5k / 12k.
@@ -128,7 +142,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="@dimen/settings_row_spacing"
         android:gravity="center_horizontal"
         android:orientation="horizontal">
 
@@ -188,10 +202,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:layout_marginTop="24dp"
-        android:padding="12dp"
+        android:layout_marginTop="@dimen/settings_row_spacing"
+        android:padding="@dimen/space_12"
         android:text="@string/eq_reset"
         android:textColor="?attr/paletteAccent"
-        android:textSize="24sp"
+        android:textSize="@dimen/settings_control_size"
         android:textStyle="bold" />
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>

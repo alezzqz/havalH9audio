@@ -45,12 +45,15 @@ import com.tgraf.havalh9music.MusicService;
 import com.tgraf.havalh9music.R;
 import com.tgraf.havalh9music.model.BreadcrumbLevel;
 import com.tgraf.havalh9music.model.LibraryRow;
+import com.tgraf.havalh9music.model.RootEntity;
+import com.tgraf.havalh9music.model.SavedVolume;
 import com.tgraf.havalh9music.model.TrackEntity;
 import com.tgraf.havalh9music.model.UsbDevice;
 import com.tgraf.havalh9music.util.CoverArtLoader;
 import com.tgraf.havalh9music.util.EqualizerManager;
 import com.tgraf.havalh9music.util.LibraryCacheManager;
 import com.tgraf.havalh9music.util.LoudnessManager;
+import com.tgraf.havalh9music.util.SoundProfileStore;
 import com.tgraf.havalh9music.util.UsbFailureSimulator;
 import com.tgraf.havalh9music.util.UsbStorageHelper;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -60,6 +63,8 @@ import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Random;
 
 /**
@@ -125,6 +130,9 @@ public class PlayerViewModel extends AndroidViewModel {
      * Однократное событие: сообщение об ошибке воспроизведения.
      */
     private final MutableLiveData<String> playbackError = new MutableLiveData<>();
+    private final MutableLiveData<Integer> soundRevision = new MutableLiveData<>(0);
+    private final MutableLiveData<Boolean> dataBusy = new MutableLiveData<>(false);
+    private final MutableLiveData<List<SavedVolume>> savedVolumes = new MutableLiveData<>();
 
     // ---- Службы ----
     private final Context app;
@@ -132,6 +140,21 @@ public class PlayerViewModel extends AndroidViewModel {
     private final CoverArtLoader covers;
     private final EqualizerManager eq;
     private final LoudnessManager loudness;
+    private final SoundProfileStore soundProfiles;
+
+    private boolean soundReady;
+    private boolean initAfterSoundLoad;
+    private String usbSoundId;
+    private String soundFolder;
+    private String soundVolumeId;
+    private int libraryGeneration;
+    private int scanUiGeneration;
+    private int savedVolumesGeneration;
+    private int allTracksGeneration;
+    private int orderedDirsGeneration;
+    private int coverGeneration;
+    private boolean disposed;
+    private final Set<String> forgottenVolumes = new HashSet<>();
 
     // ---- Навигация ----
     private File usbRoot;
@@ -244,6 +267,9 @@ public class PlayerViewModel extends AndroidViewModel {
                     lastMediaItemIndex = idx;
                     updateCurrentTrack();
                 }
+                if (idx >= 0 && idx < currentQueue.size()) {
+                    selectSoundForTrack(currentQueue.get(idx));
+                }
                 // EQ привязываем здесь, а не в слушателе плеера: слушатель
                 // живёт на потоке воспроизведения, и исключение там роняет
                 // плеер (видели зависание state=2). В try/catch — на случай
@@ -312,6 +338,17 @@ public class PlayerViewModel extends AndroidViewModel {
         this.covers = new CoverArtLoader();
         this.eq = new EqualizerManager(app);
         this.loudness = new LoudnessManager(app);
+        this.soundProfiles = new SoundProfileStore(app, soundSnapshot(),
+                () -> infoMessage.setValue(app.getString(R.string.sound_save_error)));
+        soundProfiles.load(() -> {
+            soundReady = true;
+            applySound(soundProfiles.general());
+            notifySoundChanged();
+            if (initAfterSoundLoad) {
+                initAfterSoundLoad = false;
+                startLibraryInit();
+            }
+        });
     }
 
     // ------------------------------------------------------------------
@@ -525,6 +562,13 @@ public class PlayerViewModel extends AndroidViewModel {
     // ------------------------------------------------------------------
 
     public void startLibraryInit() {
+        if (!soundReady) {
+            initAfterSoundLoad = true;
+            return;
+        }
+        if (Boolean.TRUE.equals(dataBusy.getValue())) {
+            return;
+        }
         if (initialized && usbRoot != null) {
             // Уже инициализировано — скрываем заставку (на случай повторного вызова)
             splashVisible.setValue(false);
@@ -539,7 +583,8 @@ public class PlayerViewModel extends AndroidViewModel {
         //    перечисления томов и без диалога. Так обычный холодный старт не
         //    спрашивает источник и не перечитывает библиотеку.
         File saved = savedRootFile();
-        if (saved != null && rootReadable(saved)) {
+        if (saved != null && !forgottenVolumes.contains(
+                UsbStorageHelper.getSoundVolumeId(app, saved)) && rootReadable(saved)) {
             usbInitRetriesLeft = USB_INIT_RETRIES;
             initWithRoot(saved);
             return;
@@ -547,6 +592,8 @@ public class PlayerViewModel extends AndroidViewModel {
 
         // 2) Сохранённого корня нет/он недоступен — перечисляем тома.
         List<UsbDevice> devices = UsbStorageHelper.findAllUsbRoots(app);
+        devices.removeIf(device -> forgottenVolumes.contains(
+                UsbStorageHelper.getSoundVolumeId(app, device.root)));
         if (UsbFailureSimulator.consumeEmptyEnumeration(app)) {
             devices = new ArrayList<>(); // debug-симулятор: «тома не найдены»
         }
@@ -600,7 +647,9 @@ public class PlayerViewModel extends AndroidViewModel {
      * Инициализация библиотеки на выбранном корне (кэш или полный скан).
      */
     private void initWithRoot(File root) {
+        final int generation = ++libraryGeneration;
         usbRoot = root;
+        rememberRoot(root, null);
         saveRootSelection(root); // запоминаем выбор — больше не спрашиваем на старте
         usbAvailable.setValue(true);
         handler.removeCallbacks(unmountRecheck); // том найден — проверки «отключения» не нужны
@@ -609,7 +658,13 @@ public class PlayerViewModel extends AndroidViewModel {
         refreshAllTracks(null);   // все треки — для случайного режима
         // Проверка кэша — в фоне (Room нельзя трогать из главного потока)
         cache.checkCacheAsync(root, result -> {
-            if (result == LibraryCacheManager.CacheCheck.VALID) {
+            if (generation != libraryGeneration || !root.equals(usbRoot)) {
+                return;
+            }
+            String owner = soundProfiles.cacheOwner(UsbStorageHelper.getVolumeUuid(root));
+            if (result == LibraryCacheManager.CacheCheck.VALID
+                    && (owner == null || owner.equals(usbSoundId))) {
+                soundProfiles.claimCache(UsbStorageHelper.getVolumeUuid(root), usbSoundId);
                 suppressAutoAdvance = false; // кэш готов — автопереход снова работает
                 // Кэш валиден: загружаем корневой каталог и скрываем заставку
                 // после того, как строки подгрузятся из Room.
@@ -685,8 +740,15 @@ public class PlayerViewModel extends AndroidViewModel {
      * Реальное отключение: чистим библиотеку, навигацию, очереди и плеер.
      */
     private void resetLibraryAfterUnmount() {
+        libraryGeneration++;
+        scanUiGeneration++;
+        allTracksGeneration++;
+        orderedDirsGeneration++;
+        cache.cancelScan();
+        scanning.setValue(false);
         initialized = false;
         usbRoot = null;
+        usbSoundId = null;
         usbAvailable.setValue(false);
         rows.setValue(new ArrayList<>());
         currentSegments.clear();
@@ -746,6 +808,7 @@ public class PlayerViewModel extends AndroidViewModel {
                 .edit()
                 .putString(KEY_ROOT_PATH, root.getAbsolutePath())
                 .putString(KEY_ROOT_UUID, UsbStorageHelper.getVolumeUuid(root))
+                .putString("soundVolumeId", usbSoundId)
                 .apply();
     }
 
@@ -772,6 +835,7 @@ public class PlayerViewModel extends AndroidViewModel {
      * сохранённое состояние, чтобы при следующем старте не восстановился старый трек.
      */
     private void resetPlayerSession() {
+        coverGeneration++;
         // Прямой сброс через ExoPlayer в том же процессе: команды MediaController
         // на части прошивок/эмуляторах не доходят до сессии.
         MusicService.resetPlaybackNow();
@@ -786,6 +850,12 @@ public class PlayerViewModel extends AndroidViewModel {
         }
         isPlaying.setValue(false);
         currentTrack.setValue(null);
+        soundFolder = null;
+        soundVolumeId = null;
+        if (soundReady) {
+            applySound(soundProfiles.general());
+            notifySoundChanged();
+        }
         position.setValue(0L);
         duration.setValue(0L);
         app.getSharedPreferences(PREFS_PLAY, Context.MODE_PRIVATE)
@@ -799,6 +869,9 @@ public class PlayerViewModel extends AndroidViewModel {
      * должна вылезать поверх живого списка во время воспроизведения.
      */
     public void refreshLibrary() {
+        if (!soundReady || Boolean.TRUE.equals(dataBusy.getValue())) {
+            return;
+        }
         List<UsbDevice> devices = UsbStorageHelper.findAllUsbRoots(app);
         if (!devices.isEmpty()) {
             usbDevicesPicker.setValue(devices);
@@ -821,13 +894,20 @@ public class PlayerViewModel extends AndroidViewModel {
      */
     public void selectUsbDevice(UsbDevice dev) {
         usbDevicesPicker.setValue(null);
-        if (dev == null || dev.root == null) {
+        if (dev == null || dev.root == null || !soundReady
+                || Boolean.TRUE.equals(dataBusy.getValue())) {
             return;
         }
+        libraryGeneration++;
+        allTracksGeneration++;
+        orderedDirsGeneration++;
         File newRoot = dev.root;
         if (!newRoot.equals(usbRoot)) {
             usbRoot = newRoot;
         }
+        rememberRoot(newRoot, dev.label);
+        initialized = true;
+        forgottenVolumes.remove(usbSoundId);
         saveRootSelection(newRoot); // запоминаем выбор — на старте не спрашиваем снова
         // Перечитывание библиотеки: и на том же накопителе, и на другом сбрасываем
         // навигацию, очереди, режимы и плеер — текущий трек может исчезнуть из
@@ -876,19 +956,31 @@ public class PlayerViewModel extends AndroidViewModel {
         suppressAutoAdvance = true; // на время скана автопереход глушим
         scanning.setValue(true);
         scanProgress.setValue("");
+        final int generation = ++scanUiGeneration;
+        final File scanRoot = usbRoot;
+        soundProfiles.claimCache(UsbStorageHelper.getVolumeUuid(scanRoot), usbSoundId);
         cache.scan(usbRoot, new LibraryCacheManager.ScanListener() {
             @Override
             public void onProgress(int completed, int total) {
+                if (generation != scanUiGeneration || !scanRoot.equals(usbRoot)) {
+                    return;
+                }
                 scanProgress.setValue(app.getString(R.string.scan_progress, completed));
             }
 
             @Override
             public void onBrokenCue(String fileName) {
+                if (generation != scanUiGeneration || !scanRoot.equals(usbRoot)) {
+                    return;
+                }
                 infoMessage.setValue(app.getString(R.string.broken_cue, fileName));
             }
 
             @Override
             public void onComplete(File root, int trackCount) {
+                if (generation != scanUiGeneration || !scanRoot.equals(usbRoot)) {
+                    return;
+                }
                 Log.i(TAG, "scan done: tracks=" + trackCount + " root=" + root.getAbsolutePath());
                 suppressAutoAdvance = false; // скан завершён — автопереход можно снова
                 scanning.setValue(false);
@@ -916,6 +1008,9 @@ public class PlayerViewModel extends AndroidViewModel {
 
             @Override
             public void onError(String message) {
+                if (generation != scanUiGeneration || !scanRoot.equals(usbRoot)) {
+                    return;
+                }
                 suppressAutoAdvance = false;
                 scanning.setValue(false);
                 splashVisible.setValue(false); // ошибка — тоже скрываем заставку
@@ -1115,6 +1210,7 @@ public class PlayerViewModel extends AndroidViewModel {
             startSingle(row.track);
             return;
         }
+        dirLoadGen++;
         // Последовательный: очередь = все треки текущего каталога, старт — с выбранного.
         // Дальше воспроизведение идёт сквозь все каталоги (см. playAdjacentDir).
         currentQueueDir = currentDirPath();
@@ -1155,13 +1251,13 @@ public class PlayerViewModel extends AndroidViewModel {
         if (p == null) {
             return;
         }
+        selectSoundForTrack(start);
         p.setMediaItems(items, idx, 0);
         p.prepare();
         if (autoplay) {
             p.play();
         }
         // Эквалайзер привяжется в тикере (по готовности плеера).
-        // Эквалайзер привяжется по событию EVENT_AUDIO_SESSION_ID
     }
 
     // ------------------------------------------------------------------
@@ -1440,8 +1536,20 @@ public class PlayerViewModel extends AndroidViewModel {
             }
             return;
         }
+        final int generation = ++allTracksGeneration;
+        final File root = usbRoot;
         cache.loadAllTracksAsync(list -> {
-            allTracks = list != null ? list : new ArrayList<>();
+            if (generation != allTracksGeneration || !root.equals(usbRoot)) {
+                return;
+            }
+            allTracks = new ArrayList<>();
+            if (list != null) {
+                for (TrackEntity track : list) {
+                    if (SoundProfileStore.relativeFolder(root, track.parentPath) != null) {
+                        allTracks.add(track);
+                    }
+                }
+            }
             if (after != null) {
                 after.run();
             }
@@ -1459,7 +1567,12 @@ public class PlayerViewModel extends AndroidViewModel {
             }
             return;
         }
+        final int generation = ++orderedDirsGeneration;
+        final File root = usbRoot;
         cache.loadOrderedTrackDirsAsync(usbRoot, dirs -> {
+            if (generation != orderedDirsGeneration || !root.equals(usbRoot)) {
+                return;
+            }
             orderedDirs = dirs != null ? dirs : new ArrayList<>();
             if (after != null) {
                 after.run();
@@ -1552,8 +1665,13 @@ public class PlayerViewModel extends AndroidViewModel {
     }
 
     private void updateCurrentTrack() {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            handler.post(this::updateCurrentTrack);
+            return;
+        }
         int idx = currentItemIndex();
         if (idx >= 0 && idx < currentQueue.size()) {
+            selectSoundForTrack(currentQueue.get(idx));
             currentTrack.setValue(currentQueue.get(idx));
             // На ГУ питание может пропасть без onPause — фиксируем состояние
             // при каждой смене трека, чтобы восстанавливался именно последний
@@ -1572,9 +1690,14 @@ public class PlayerViewModel extends AndroidViewModel {
      * Обложка для трека (файл каталога или встроенная).
      */
     public void loadCover(TrackEntity t, CoverArtLoader.Callback cb) {
+        final int generation = ++coverGeneration;
         File dir = t.parentPath != null ? new File(t.parentPath) : null;
         String src = t.isCue && t.cueSourceFile != null ? t.cueSourceFile : t.path;
-        covers.load(dir, src, cb);
+        covers.load(dir, src, bitmap -> {
+            if (generation == coverGeneration && !disposed) {
+                cb.onLoaded(bitmap);
+            }
+        });
     }
 
     // ------------------------------------------------------------------
@@ -1582,8 +1705,12 @@ public class PlayerViewModel extends AndroidViewModel {
     // ------------------------------------------------------------------
 
     public void savePlaybackStateNow() {
+        if (disposed || usbRoot == null || Boolean.TRUE.equals(dataBusy.getValue())) {
+            return;
+        }
         SharedPreferences sp = app.getSharedPreferences(PREFS_PLAY, Context.MODE_PRIVATE);
         SharedPreferences.Editor e = sp.edit();
+        e.putString("volumeId", usbSoundId);
         TrackEntity cur = currentTrack.getValue();
         if (cur != null) {
             e.putString("path", cur.path);
@@ -1624,6 +1751,10 @@ public class PlayerViewModel extends AndroidViewModel {
      */
     private void restorePlaybackState() {
         SharedPreferences sp = app.getSharedPreferences(PREFS_PLAY, Context.MODE_PRIVATE);
+        String volumeId = sp.getString("volumeId", null);
+        if (volumeId != null && !volumeId.equals(usbSoundId)) {
+            return;
+        }
         final String path = sp.getString("path", null);
         final String folderAbs = sp.getString("folder", null);
         final long pos = sp.getLong("pos", 0);
@@ -1748,11 +1879,17 @@ public class PlayerViewModel extends AndroidViewModel {
         for (TrackEntity t : currentQueue) {
             items.add(toMediaItem(t));
         }
+        selectSoundForTrack(start);
         p.setMediaItems(items, idx, 0);
         p.prepare(); // без play(): трек загружен, но играть не начинаем
         if (seekPosMs > 0) {
             final long seekPos = seekPosMs;
+            final int generation = dirLoadGen;
+            final int library = libraryGeneration;
             handler.postDelayed(() -> {
+                if (generation != dirLoadGen || library != libraryGeneration) {
+                    return;
+                }
                 Player pp = player();
                 if (pp != null) {
                     try {
@@ -1765,8 +1902,305 @@ public class PlayerViewModel extends AndroidViewModel {
     }
 
     // ------------------------------------------------------------------
-    // Геттеры
+    // Getters
     // ------------------------------------------------------------------
+
+    private void rememberRoot(File root, String label) {
+        usbSoundId = UsbStorageHelper.getSoundVolumeId(app, root);
+        SavedVolume old = soundProfiles.volume(usbSoundId);
+        if (label == null) {
+            label = old == null ? root.getName() : old.label;
+            for (UsbDevice device : UsbStorageHelper.findAllUsbRoots(app)) {
+                if (device.root.equals(root)) {
+                    label = device.label;
+                    break;
+                }
+            }
+        }
+        soundProfiles.remember(usbSoundId, label, root.getAbsolutePath(),
+                UsbStorageHelper.getVolumeUuid(root));
+    }
+
+    private SoundProfileStore.Profile soundSnapshot() {
+        return new SoundProfileStore.Profile(eq.getGains(), loudness.getGainDb());
+    }
+
+    private void applySound(SoundProfileStore.Profile profile) {
+        // Только значения на главном потоке: привязку к новой сессии оставляем
+        // тикеру, иначе исключение эффектов может подвесить воспроизведение на ГУ.
+        try {
+            eq.setGains(profile.bands());
+        } catch (Throwable ignored) {
+        }
+        try {
+            loudness.setGainDb(profile.gainDb);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void selectSoundForTrack(TrackEntity track) {
+        if (!soundReady) {
+            return;
+        }
+        String folder = track == null ? null
+                : SoundProfileStore.relativeFolder(usbRoot, track.parentPath);
+        String volume = folder == null ? null : usbSoundId;
+        if (java.util.Objects.equals(folder, soundFolder)
+                && java.util.Objects.equals(volume, soundVolumeId)) {
+            return;
+        }
+        soundFolder = folder;
+        soundVolumeId = volume;
+        SoundProfileStore.Profile profile = folder == null ? null
+                : soundProfiles.profile(volume, folder);
+        applySound(profile == null ? soundProfiles.general() : profile);
+        notifySoundChanged();
+    }
+
+    private void notifySoundChanged() {
+        Integer revision = soundRevision.getValue();
+        soundRevision.setValue(revision == null ? 1 : revision + 1);
+    }
+
+    private boolean canEditSound() {
+        return soundReady && !Boolean.TRUE.equals(dataBusy.getValue());
+    }
+
+    private void saveEditedSound() {
+        if (isFolderSoundEnabled()) {
+            soundProfiles.saveProfile(soundVolumeId, soundFolder, soundSnapshot());
+        } else {
+            soundProfiles.saveGeneral(soundSnapshot());
+        }
+        notifySoundChanged();
+    }
+
+    public void setSoundBand(int band, float db) {
+        if (!canEditSound()) {
+            return;
+        }
+        eq.setBand(band, db);
+        saveEditedSound();
+    }
+
+    public void setSoundGain(float db) {
+        if (!canEditSound()) {
+            return;
+        }
+        loudness.setGainDb(db);
+        saveEditedSound();
+    }
+
+    public void applySoundPreset(String name) {
+        if (!canEditSound()) {
+            return;
+        }
+        eq.applyPreset(name);
+        saveEditedSound();
+    }
+
+    public void resetSoundBands() {
+        if (!canEditSound()) {
+            return;
+        }
+        eq.reset();
+        saveEditedSound();
+    }
+
+    public boolean isFolderSoundEnabled() {
+        return soundReady && soundFolder != null && soundVolumeId != null
+                && soundProfiles.profile(soundVolumeId, soundFolder) != null;
+    }
+
+    public boolean canBindFolderSound() {
+        return canEditSound() && soundFolder != null && soundVolumeId != null;
+    }
+
+    public String getSoundContextToken() {
+        return soundVolumeId + "\n" + soundFolder;
+    }
+
+    public void setFolderSoundEnabled(boolean enabled) {
+        if (!canBindFolderSound()) {
+            return;
+        }
+        if (enabled) {
+            soundProfiles.saveProfile(soundVolumeId, soundFolder, soundSnapshot());
+        } else {
+            soundProfiles.removeProfile(soundVolumeId, soundFolder);
+            applySound(soundProfiles.general());
+        }
+        notifySoundChanged();
+    }
+
+    public void clearAllFolderSounds() {
+        clearFolderSounds(null);
+    }
+
+    public void clearFolderSounds(SavedVolume volume) {
+        if (!canEditSound()) {
+            return;
+        }
+        String volumeId = volume == null ? null : volume.id;
+        if (volumeId != null && soundProfiles.volume(volumeId) == null) {
+            return;
+        }
+        dataBusy.setValue(true);
+        savedVolumesGeneration++;
+        soundProfiles.clearProfiles(volumeId, success -> {
+            dataBusy.setValue(false);
+            if (success) {
+                if (volumeId == null || volumeId.equals(soundVolumeId)) {
+                    applySound(soundProfiles.general());
+                }
+                notifySoundChanged();
+            }
+            int message = success ? (volumeId == null ? R.string.sound_profiles_deleted
+                    : R.string.sound_volume_profiles_deleted) : R.string.sound_save_error;
+            infoMessage.setValue(app.getString(message));
+            if (disposed) {
+                soundProfiles.close();
+            }
+        });
+    }
+
+    public void loadSavedVolumes() {
+        if (!soundReady || Boolean.TRUE.equals(dataBusy.getValue())) {
+            return;
+        }
+        savedVolumes.setValue(null);
+        final int generation = ++savedVolumesGeneration;
+        cache.loadSavedRootsAsync(roots -> {
+            if (generation != savedVolumesGeneration) {
+                return;
+            }
+            if (roots == null) {
+                infoMessage.setValue(app.getString(R.string.saved_volumes_read_error));
+            }
+            List<UsbDevice> connected = UsbStorageHelper.findAllUsbRoots(app);
+            if (roots != null) {
+                for (RootEntity root : roots) {
+                    if (root.rootPath == null) {
+                        continue;
+                    }
+                    String id = soundProfiles.idForCache(root.volumeUuid, root.rootPath);
+                    SavedVolume old = soundProfiles.volume(id);
+                    String label = old == null ? new File(root.rootPath).getName() : old.label;
+                    for (UsbDevice device : connected) {
+                        if (UsbStorageHelper.getVolumeUuid(device.root).equals(root.volumeUuid)) {
+                            id = UsbStorageHelper.getSoundVolumeId(app, device.root);
+                            label = device.label;
+                            break;
+                        }
+                    }
+                    soundProfiles.remember(id, label, root.rootPath, root.volumeUuid);
+                }
+            }
+            List<SavedVolume> result = new ArrayList<>();
+            for (SavedVolume volume : soundProfiles.volumes()) {
+                boolean available = false;
+                for (UsbDevice device : connected) {
+                    if (volume.id.equals(UsbStorageHelper.getSoundVolumeId(app, device.root))) {
+                        available = true;
+                        break;
+                    }
+                }
+                result.add(new SavedVolume(volume.id, volume.label, volume.rootPaths,
+                        volume.cacheUuids, available));
+            }
+            savedVolumes.setValue(result);
+        });
+    }
+
+    public void forgetVolume(SavedVolume volume) {
+        if (!soundReady || Boolean.TRUE.equals(dataBusy.getValue())) {
+            return;
+        }
+        // Снимок из диалога мог устареть после перемонтирования: используем реестр.
+        SavedVolume latest = soundProfiles.volume(volume.id);
+        if (latest == null) {
+            return;
+        }
+        boolean active = volume.id.equals(usbSoundId);
+        SharedPreferences rootPrefs = app.getSharedPreferences(PREFS_ROOT, Context.MODE_PRIVATE);
+        String savedRootId = rootPrefs.getString("soundVolumeId", null);
+        if (savedRootId == null) {
+            savedRootId = soundProfiles.cacheOwner(rootPrefs.getString(KEY_ROOT_UUID, ""));
+        }
+        boolean clearRoot = savedRootId == null
+                ? latest.cacheUuids.contains(rootPrefs.getString(KEY_ROOT_UUID, ""))
+                        || latest.rootPaths.contains(rootPrefs.getString(KEY_ROOT_PATH, ""))
+                : volume.id.equals(savedRootId);
+        SharedPreferences playback = app.getSharedPreferences(PREFS_PLAY, Context.MODE_PRIVATE);
+        String savedId = playback.getString("volumeId", null);
+        boolean clearPlayback = active || volume.id.equals(savedId);
+        if (savedId == null && savedRootId != null) {
+            clearPlayback |= volume.id.equals(savedRootId);
+        } else if (savedId == null) {
+            String folder = playback.getString("folder", playback.getString("path", null));
+            for (String path : latest.rootPaths) {
+                if (SoundProfileStore.relativeFolder(new File(path), folder) != null) {
+                    clearPlayback = true;
+                }
+            }
+        }
+        final boolean erasePlayback = clearPlayback;
+        List<String> ownedCaches = new ArrayList<>();
+        for (String uuid : latest.cacheUuids) {
+            String owner = soundProfiles.cacheOwner(uuid);
+            if (owner == null || volume.id.equals(owner)) {
+                ownedCaches.add(uuid);
+            }
+        }
+        SavedVolume ownedData = new SavedVolume(latest.id, latest.label,
+                latest.rootPaths, ownedCaches, latest.connected);
+        dataBusy.setValue(true);
+        savedVolumesGeneration++;
+        forgottenVolumes.add(volume.id);
+        if (active) {
+            resetLibraryAfterUnmount();
+            usbDevicesPicker.setValue(null);
+            splashVisible.setValue(false);
+            scanProgress.setValue("");
+            resetNavOnScanComplete = false;
+        }
+        infoMessage.setValue(app.getString(R.string.volume_deleting));
+        cache.deleteVolumeAsync(ownedData, success -> {
+            if (!success) {
+                finishVolumeDeletion(false);
+                return;
+            }
+            soundProfiles.forget(volume.id, clearRoot, erasePlayback,
+                    this::finishVolumeDeletion);
+        });
+    }
+
+    private void finishVolumeDeletion(boolean success) {
+        dataBusy.setValue(false);
+        infoMessage.setValue(app.getString(success ? R.string.volume_deleted
+                : R.string.volume_delete_error));
+        if (disposed) {
+            soundProfiles.close();
+        } else {
+            loadSavedVolumes();
+        }
+    }
+
+    public LiveData<Integer> getSoundRevision() {
+        return soundRevision;
+    }
+
+    public LiveData<Boolean> getDataBusy() {
+        return dataBusy;
+    }
+
+    public LiveData<List<SavedVolume>> getSavedVolumes() {
+        return savedVolumes;
+    }
+
+    public boolean isSoundReady() {
+        return soundReady;
+    }
 
     public LiveData<Boolean> getUsbAvailable() {
         return usbAvailable;
@@ -1880,8 +2314,23 @@ public class PlayerViewModel extends AndroidViewModel {
 
     @Override
     protected void onCleared() {
-        handler.removeCallbacks(ticker);
         savePlaybackStateNow();
+        disposed = true;
+        libraryGeneration++;
+        scanUiGeneration++;
+        navGen++;
+        dirLoadGen++;
+        savedVolumesGeneration++;
+        allTracksGeneration++;
+        orderedDirsGeneration++;
+        coverGeneration++;
+        handler.removeCallbacksAndMessages(null);
+        // Очистка, уже подтверждённая пользователем, должна завершить и Room,
+        // и SharedPreferences даже при закрытии Activity между этими этапами.
+        if (!Boolean.TRUE.equals(dataBusy.getValue())) {
+            soundProfiles.close();
+        }
+        cache.cancelScan();
         super.onCleared();
     }
 }

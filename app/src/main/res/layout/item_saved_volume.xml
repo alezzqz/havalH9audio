@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/saved_volume_row_height"
+    android:padding="@dimen/settings_field_padding"
+    android:gravity="center_vertical"
+    android:background="@drawable/bg_settings_field"
+    android:textColor="?attr/paletteTextPrimary"
+    android:textSize="@dimen/saved_volume_text_size" />
