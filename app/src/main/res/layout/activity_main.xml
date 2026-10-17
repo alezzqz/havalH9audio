@@ -5,7 +5,6 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/paletteBackground"
     tools:context=".MainActivity">
 
     <!-- ================= ЛЕВАЯ ПАНЕЛЬ (навигация + список) ================= -->
@@ -336,6 +335,17 @@
                 app:tint="?attr/paletteIconPrimary" />
 
             <ImageButton
+                android:id="@+id/btnGenres"
+                android:layout_width="@dimen/btn_small_size"
+                android:layout_height="@dimen/btn_small_size"
+                android:layout_marginEnd="@dimen/small_gap"
+                android:background="@drawable/bg_squircle_button"
+                android:contentDescription="@string/genres_title"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_genres_filter"
+                app:tint="?attr/paletteIconInactive" />
+
+            <ImageButton
                 android:id="@+id/btnPlaylist"
                 android:layout_width="@dimen/btn_small_size"
                 android:layout_height="@dimen/btn_small_size"
@@ -364,25 +374,20 @@
     </LinearLayout>
 
     <!-- ================= SPLASH-ОВЕРЛЕЙ (показывается при старте) ================= -->
-    <FrameLayout
+    <LinearLayout
         android:id="@+id/splashOverlay"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="?attr/paletteBackground"
         android:clickable="true"
         android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical"
         android:elevation="100dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center_horizontal"
-            android:orientation="vertical">
 
             <!-- Название приложения -->
             <TextView
@@ -425,7 +430,6 @@
                 android:textColor="?attr/paletteTextSecondary"
                 android:textSize="16sp"
                 tools:text="Сканирование…" />
-        </LinearLayout>
-    </FrameLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

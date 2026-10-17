@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/settings_padding"
+    android:background="@drawable/bg_eq_content">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/genres_title"
+        android:textColor="?attr/paletteAccent"
+        android:textSize="@dimen/settings_title_size"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/search"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/settings_field_height"
+        android:layout_marginTop="@dimen/space_12"
+        android:hint="@string/genres_search"
+        android:inputType="text"
+        android:singleLine="true"
+        android:imeOptions="actionDone"
+        android:importantForAutofill="no"
+        android:textColor="?attr/paletteTextPrimary"
+        android:textColorHint="?attr/paletteTextSecondary"
+        android:textSize="@dimen/settings_label_size" />
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/allGenres"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/settings_field_height"
+        android:text="@string/genres_all"
+        android:textColor="?attr/paletteTextPrimary"
+        android:textSize="@dimen/settings_control_size" />
+
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_8"
+        android:visibility="gone"
+        android:textColor="?attr/paletteTextSecondary"
+        android:textSize="@dimen/settings_label_size" />
+
+    <ListView
+        android:id="@+id/genres"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/genres_list_height"
+        android:layout_weight="1"
+        android:layout_marginTop="@dimen/space_8"
+        android:divider="?attr/paletteDivider"
+        android:dividerHeight="@dimen/divider_height" />
+
+    <TextView
+        android:id="@+id/summary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_12"
+        android:textColor="?attr/paletteTextPrimary"
+        android:textSize="@dimen/settings_label_size" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_8"
+        android:text="@string/genres_hint"
+        android:textColor="?attr/paletteTextSecondary"
+        android:textSize="@dimen/genres_hint_size" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/settings_row_spacing"
+        android:gravity="center_vertical"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/refresh"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:text="@string/genres_refresh"
+            android:textSize="@dimen/settings_control_size" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/cancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action_cancel"
+            android:textSize="@dimen/settings_control_size" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/apply"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/settings_field_spacing"
+            android:text="@string/genres_apply"
+            android:textSize="@dimen/settings_control_size" />
+    </LinearLayout>
+</LinearLayout>

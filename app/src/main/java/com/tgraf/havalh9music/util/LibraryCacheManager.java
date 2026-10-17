@@ -89,6 +89,7 @@ public class LibraryCacheManager {
          * Кэш для этого тома есть и скан был завершён — сразу открываем списки.
          */
         VALID,
+        VALID_WITHOUT_GENRES,
         /**
          * Кэша на этот том нет (или скан прерывался) — нужен полный скан.
          */
@@ -136,7 +137,8 @@ public class LibraryCacheManager {
                 RootEntity r = db.rootDao().rootByUuid(UsbStorageHelper.getVolumeUuid(root));
                 // complete = true выставляется только в самом конце скана;
                 // прерванный скан (force-stop) остаётся с false — тогда пересканируем.
-                cc = (r != null && r.complete) ? CacheCheck.VALID : CacheCheck.MISS;
+                cc = r == null || !r.complete ? CacheCheck.MISS
+                        : r.genreVersion > 0 ? CacheCheck.VALID : CacheCheck.VALID_WITHOUT_GENRES;
             } catch (Exception e) {
                 Log.e(TAG, "Проверка кэша упала", e);
                 cc = CacheCheck.MISS;
@@ -487,8 +489,8 @@ public class LibraryCacheManager {
                         String abs = f.getAbsolutePath();
                         List<CueSheetParser.CueTrack> vtracks = bySource.get(abs);
                         if (vtracks != null && !vtracks.isEmpty()) {
-                            long endMs = readFileDurationMs(f);
-                            return buildCueTracks(f, vtracks, endMs, dirCover);
+                            AudioTagParser.Tags tags = AudioTagParser.read(f);
+                            return buildCueTracks(f, vtracks, tags, dirCover);
                         }
                         List<TrackEntity> one = new ArrayList<>(1);
                         one.add(metaScan(f, dirCover));
@@ -559,6 +561,7 @@ public class LibraryCacheManager {
             re.scannedAt = System.currentTimeMillis();
             re.fileCount = audio.size();
             re.complete = true;
+            re.genreVersion = 1;
             db.rootDao().upsert(re);
 
             final File doneRoot = root;
@@ -587,8 +590,10 @@ public class LibraryCacheManager {
      * Виртуальные треки из CUE для одного физического FLAC.
      */
     private List<TrackEntity> buildCueTracks(File flac,
-                                             List<CueSheetParser.CueTrack> vtracks, long fileEndMs,
+                                             List<CueSheetParser.CueTrack> vtracks,
+                                             AudioTagParser.Tags tags,
                                              String dirCover) {
+        long fileEndMs = tags.durationMs;
         String abs = flac.getAbsolutePath();
         File dir = flac.getParentFile();
         String cover = (dirCover == null || dirCover.isEmpty()) ? null : dirCover;
@@ -609,7 +614,10 @@ public class LibraryCacheManager {
 
             e.title = ct.title == null || ct.title.isEmpty() ? null : ct.title;
             e.artist = ct.performer == null || ct.performer.isEmpty() ? null : ct.performer;
-            e.genre = ct.genre;
+            e.genre = GenreFilter.canonical(ct.genre);
+            if (e.genre.isEmpty()) {
+                e.genre = tags.genre;
+            }
             e.date = ct.date;
             e.trackNumber = ct.number;
 
@@ -652,18 +660,9 @@ public class LibraryCacheManager {
         e.title = tags.title;
         e.artist = tags.artist;
         e.album = tags.album;
+        e.genre = tags.genre;
         e.trackNumber = tags.trackNumber;
         return e;
-    }
-
-    // ---------------------------------------------------------------------
-
-    /**
-     * Длина аудиофайла в мс (для CUE — конец последнего трека = конец файла).
-     */
-    private long readFileDurationMs(File f) {
-        AudioTagParser.Tags tags = AudioTagParser.read(f);
-        return tags.durationMs > 0 ? tags.durationMs : -1;
     }
 
     private void collectFiles(File dir, List<File> out, int generation) {

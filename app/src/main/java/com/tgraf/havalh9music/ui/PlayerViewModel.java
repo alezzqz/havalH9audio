@@ -51,6 +51,7 @@ import com.tgraf.havalh9music.model.TrackEntity;
 import com.tgraf.havalh9music.model.UsbDevice;
 import com.tgraf.havalh9music.util.CoverArtLoader;
 import com.tgraf.havalh9music.util.EqualizerManager;
+import com.tgraf.havalh9music.util.GenreFilter;
 import com.tgraf.havalh9music.util.LibraryCacheManager;
 import com.tgraf.havalh9music.util.LoudnessManager;
 import com.tgraf.havalh9music.util.SoundProfileStore;
@@ -66,6 +67,7 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Random;
+import java.util.Collections;
 
 /**
  * ViewModel: состояние библиотеки (каталог + крошки + строки списка),
@@ -133,6 +135,7 @@ public class PlayerViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> soundRevision = new MutableLiveData<>(0);
     private final MutableLiveData<Boolean> dataBusy = new MutableLiveData<>(false);
     private final MutableLiveData<List<SavedVolume>> savedVolumes = new MutableLiveData<>();
+    private final MutableLiveData<GenreState> genreState = new MutableLiveData<>();
 
     // ---- Службы ----
     private final Context app;
@@ -187,6 +190,12 @@ public class PlayerViewModel extends AndroidViewModel {
      * Все треки библиотеки — для случайного выбора.
      */
     private List<TrackEntity> allTracks = new ArrayList<>();
+    private List<TrackEntity> shuffleTracks = new ArrayList<>();
+    private GenreFilter.Catalog genreCatalog = new GenreFilter.Catalog(Collections.emptyList());
+    private Set<String> selectedGenres;
+    private boolean genreMetadataReady;
+    private boolean genreCacheChecked;
+    private boolean allTracksReady;
     /**
      * История случайного воспроизведения — для кнопки «предыдущий».
      */
@@ -544,6 +553,84 @@ public class PlayerViewModel extends AndroidViewModel {
         }
     }
 
+    public static final class GenreState {
+        public final String volumeId;
+        public final String volumeLabel;
+        public final int generation;
+        public final boolean ready;
+        public final boolean needsRefresh;
+        public final GenreFilter.Catalog catalog;
+        public final Set<String> selected;
+
+        /**
+         * Set.copyOf доступен с API 31, а снимок жанров нужен и на ГУ с API 28.
+         */
+        @SuppressWarnings("Java9CollectionFactory")
+        private GenreState(String volumeId, String volumeLabel, int generation, boolean ready,
+                           boolean needsRefresh, GenreFilter.Catalog catalog, Set<String> selected) {
+            this.volumeId = volumeId;
+            this.volumeLabel = volumeLabel;
+            this.generation = generation;
+            this.ready = ready;
+            this.needsRefresh = needsRefresh;
+            this.catalog = catalog;
+            this.selected = selected == null ? null
+                    : Collections.unmodifiableSet(new HashSet<>(selected));
+        }
+    }
+
+    public LiveData<GenreState> getGenreState() {
+        return genreState;
+    }
+
+    private void publishGenreState() {
+        if (usbSoundId == null || usbRoot == null) {
+            genreState.setValue(null);
+            return;
+        }
+        SavedVolume volume = soundProfiles.volume(usbSoundId);
+        genreState.setValue(new GenreState(usbSoundId,
+                volume == null ? usbRoot.getName() : volume.label, allTracksGeneration,
+                genreMetadataReady && allTracksReady, genreCacheChecked && !genreMetadataReady,
+                genreCatalog, selectedGenres));
+    }
+
+    public boolean applyGenreFilter(GenreState expected, Set<String> selected) {
+        GenreState state = genreState.getValue();
+        if (state == null || expected == null || !state.ready
+                || state.generation != expected.generation
+                || !state.volumeId.equals(expected.volumeId)
+                || Boolean.TRUE.equals(scanning.getValue())
+                || Boolean.TRUE.equals(dataBusy.getValue())) {
+            return false;
+        }
+        Set<String> selection = selected == null ? null : new HashSet<>(selected);
+        if (selection != null) {
+            selection.retainAll(genreCatalog.keys());
+        }
+        List<TrackEntity> matching = genreCatalog.matching(selection);
+        if (matching.isEmpty()) {
+            infoMessage.setValue(app.getString(R.string.genres_no_matches));
+            return false;
+        }
+        selectedGenres = selection;
+        soundProfiles.saveGenres(usbSoundId, selectedGenres);
+        shuffleTracks = matching;
+        shuffleHistory.clear();
+        publishGenreState();
+        return true;
+    }
+
+    public void refreshGenreLibrary(GenreState expected) {
+        GenreState state = genreState.getValue();
+        if (state == null || expected == null || state.generation != expected.generation
+                || !state.volumeId.equals(expected.volumeId)
+                || Boolean.TRUE.equals(scanning.getValue())) {
+            return;
+        }
+        selectUsbDevice(new UsbDevice(usbRoot, state.volumeLabel));
+    }
+
     /**
      * Сброс режима в последовательный (после пересканирования), без перестройки очереди.
      */
@@ -655,15 +742,17 @@ public class PlayerViewModel extends AndroidViewModel {
         handler.removeCallbacks(unmountRecheck); // том найден — проверки «отключения» не нужны
         unmountChecksLeft = 0;
         refreshOrderedDirs(null); // порядок каталогов для сквозного воспроизведения
-        refreshAllTracks(null);   // все треки — для случайного режима
         // Проверка кэша — в фоне (Room нельзя трогать из главного потока)
         cache.checkCacheAsync(root, result -> {
             if (generation != libraryGeneration || !root.equals(usbRoot)) {
                 return;
             }
             String owner = soundProfiles.cacheOwner(UsbStorageHelper.getVolumeUuid(root));
-            if (result == LibraryCacheManager.CacheCheck.VALID
+            if (result != LibraryCacheManager.CacheCheck.MISS
                     && (owner == null || owner.equals(usbSoundId))) {
+                genreCacheChecked = true;
+                genreMetadataReady = result == LibraryCacheManager.CacheCheck.VALID;
+                refreshAllTracks(null);
                 soundProfiles.claimCache(UsbStorageHelper.getVolumeUuid(root), usbSoundId);
                 suppressAutoAdvance = false; // кэш готов — автопереход снова работает
                 // Кэш валиден: загружаем корневой каталог и скрываем заставку
@@ -757,6 +846,9 @@ public class PlayerViewModel extends AndroidViewModel {
         currentQueueDir = null;
         orderedDirs = new ArrayList<>();
         allTracks = new ArrayList<>();
+        shuffleTracks = new ArrayList<>();
+        allTracksReady = false;
+        publishGenreState();
         shuffleHistory.clear();
         resetModeToSequential();
         pendingScrollToTrack = false;
@@ -919,6 +1011,9 @@ public class PlayerViewModel extends AndroidViewModel {
         currentQueueDir = null;
         orderedDirs = new ArrayList<>();
         allTracks = new ArrayList<>();
+        shuffleTracks = new ArrayList<>();
+        allTracksReady = false;
+        publishGenreState();
         shuffleHistory.clear();
         resetModeToSequential();
         pendingScrollToTrack = false;
@@ -955,6 +1050,11 @@ public class PlayerViewModel extends AndroidViewModel {
         }
         suppressAutoAdvance = true; // на время скана автопереход глушим
         scanning.setValue(true);
+        allTracksGeneration++;
+        genreCacheChecked = false;
+        genreMetadataReady = false;
+        allTracksReady = false;
+        publishGenreState();
         scanProgress.setValue("");
         final int generation = ++scanUiGeneration;
         final File scanRoot = usbRoot;
@@ -985,6 +1085,8 @@ public class PlayerViewModel extends AndroidViewModel {
                 suppressAutoAdvance = false; // скан завершён — автопереход можно снова
                 scanning.setValue(false);
                 splashVisible.setValue(false); // скан завершён — скрываем заставку
+                genreCacheChecked = true;
+                genreMetadataReady = true;
                 refreshOrderedDirs(null); // кэш переписан — обновляем порядок каталогов
                 refreshAllTracks(null);   // и список всех треков для случайного режима
                 resetModeToSequential();  // после пересканирования — всегда последовательный
@@ -1014,6 +1116,8 @@ public class PlayerViewModel extends AndroidViewModel {
                 suppressAutoAdvance = false;
                 scanning.setValue(false);
                 splashVisible.setValue(false); // ошибка — тоже скрываем заставку
+                genreCacheChecked = true;
+                publishGenreState();
                 infoMessage.setValue(message);
             }
         });
@@ -1411,28 +1515,43 @@ public class PlayerViewModel extends AndroidViewModel {
     }
 
     private void playRandom(boolean retried) {
+        if (usbRoot == null || !genreCacheChecked
+                || Boolean.TRUE.equals(scanning.getValue())
+                || Boolean.TRUE.equals(dataBusy.getValue())) {
+            return;
+        }
+        if (selectedGenres != null && !genreMetadataReady) {
+            infoMessage.setValue(app.getString(R.string.genres_refresh_needed));
+            return;
+        }
         if (allTracks.isEmpty()) {
-            if (retried) {
+            if (retried || allTracksReady) {
+                infoMessage.setValue(app.getString(R.string.genres_no_matches));
                 return;
             }
             refreshAllTracks(() -> playRandom(true)); // индекс ещё не готов
             return;
         }
+        if (shuffleTracks.isEmpty()) {
+            infoMessage.setValue(app.getString(R.string.genres_no_matches));
+            return;
+        }
         TrackEntity cur = currentTrack.getValue();
-        TrackEntity pick = null;
-        for (int attempt = 0; attempt < 8; attempt++) {
-            TrackEntity cand = allTracks.get(random.nextInt(allTracks.size()));
-            // не повторяем текущий трек (если в библиотеке больше одного)
-            if (cur == null || allTracks.size() == 1 || !sameTrack(cand, cur)) {
-                pick = cand;
-                break;
+        int excludedIndex = -1;
+        if (cur != null && shuffleTracks.size() > 1) {
+            for (int index = 0; index < shuffleTracks.size(); index++) {
+                if (sameTrack(shuffleTracks.get(index), cur)) {
+                    excludedIndex = index;
+                    break;
+                }
             }
         }
-        if (pick == null) {
-            pick = allTracks.get(random.nextInt(allTracks.size()));
+        int pickIndex = random.nextInt(shuffleTracks.size() - (excludedIndex >= 0 ? 1 : 0));
+        if (excludedIndex >= 0 && pickIndex >= excludedIndex) {
+            pickIndex++;
         }
         pushShuffleHistory(cur);
-        startSingle(pick);
+        startSingle(shuffleTracks.get(pickIndex));
     }
 
     /**
@@ -1499,7 +1618,7 @@ public class PlayerViewModel extends AndroidViewModel {
      * Добавляет трек в историю случайного воспроизведения (ограниченную по размеру).
      */
     private void pushShuffleHistory(TrackEntity t) {
-        if (t == null) {
+        if (t == null || !GenreFilter.matches(t.genre, selectedGenres)) {
             return;
         }
         shuffleHistory.addLast(t);
@@ -1531,6 +1650,9 @@ public class PlayerViewModel extends AndroidViewModel {
     private void refreshAllTracks(Runnable after) {
         if (usbRoot == null) {
             allTracks = new ArrayList<>();
+            shuffleTracks = new ArrayList<>();
+            allTracksReady = false;
+            publishGenreState();
             if (after != null) {
                 after.run();
             }
@@ -1549,6 +1671,13 @@ public class PlayerViewModel extends AndroidViewModel {
                         allTracks.add(track);
                     }
                 }
+            }
+            allTracksReady = true;
+            genreCatalog = new GenreFilter.Catalog(allTracks);
+            shuffleTracks = genreCatalog.matching(selectedGenres);
+            publishGenreState();
+            if (selectedGenres != null && shuffleTracks.isEmpty()) {
+                infoMessage.setValue(app.getString(R.string.genres_no_matches));
             }
             if (after != null) {
                 after.run();
@@ -1919,6 +2048,13 @@ public class PlayerViewModel extends AndroidViewModel {
         }
         soundProfiles.remember(usbSoundId, label, root.getAbsolutePath(),
                 UsbStorageHelper.getVolumeUuid(root));
+        selectedGenres = soundProfiles.selectedGenres(usbSoundId);
+        genreMetadataReady = false;
+        genreCacheChecked = false;
+        allTracksReady = false;
+        genreCatalog = new GenreFilter.Catalog(Collections.emptyList());
+        shuffleTracks = new ArrayList<>();
+        publishGenreState();
     }
 
     private SoundProfileStore.Profile soundSnapshot() {

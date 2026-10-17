@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -50,6 +52,7 @@ public final class SoundProfileStore {
     private static final String PROFILE = "profile:";
     private static final String VOLUME = "volume:";
     private static final String CACHE_OWNER = "cacheOwner:";
+    private static final String GENRES = "genres:";
 
     public interface Completion {
         void onComplete(boolean success);
@@ -116,6 +119,7 @@ public final class SoundProfileStore {
     private final Map<String, String> profiles = new LinkedHashMap<>();
     private final Map<String, SavedVolume> volumes = new LinkedHashMap<>();
     private final Map<String, String> cacheOwners = new LinkedHashMap<>();
+    private final Map<String, String> genreFilters = new LinkedHashMap<>();
     private final Runnable writeError;
     private SharedPreferences prefs;
     private Profile general;
@@ -146,6 +150,8 @@ public final class SoundProfileStore {
                         if (decoded != null) {
                             general = decoded;
                         }
+                    } else if (key.startsWith(GENRES)) {
+                        genreFilters.put(Uri.decode(key.substring(GENRES.length())), value);
                     } else if (key.startsWith(CACHE_OWNER)) {
                         cacheOwners.put(Uri.decode(key.substring(CACHE_OWNER.length())), value);
                     } else if (key.startsWith(PROFILE)) {
@@ -186,6 +192,39 @@ public final class SoundProfileStore {
 
     public Profile general() {
         return general;
+    }
+
+    public Set<String> selectedGenres(String volumeId) {
+        String raw = genreFilters.get(volumeId);
+        if (raw == null) {
+            return null;
+        }
+        try {
+            JSONObject json = new JSONObject(raw);
+            if (json.getInt("version") != 1) {
+                return new LinkedHashSet<>();
+            }
+            return new LinkedHashSet<>(strings(json.getJSONArray("selected")));
+        } catch (JSONException e) {
+            return new LinkedHashSet<>();
+        }
+    }
+
+    public void saveGenres(String volumeId, Set<String> selected) {
+        String key = GENRES + Uri.encode(volumeId);
+        if (selected == null) {
+            genreFilters.remove(volumeId);
+            io.execute(() -> report(prefs.edit().remove(key).commit()));
+            return;
+        }
+        try {
+            String raw = new JSONObject().put("version", 1)
+                    .put("selected", new JSONArray(selected)).toString();
+            genreFilters.put(volumeId, raw);
+            put(key, raw);
+        } catch (JSONException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     private static String profilePrefix(String volumeId) {
@@ -328,7 +367,8 @@ public final class SoundProfileStore {
                         .edit().clear().commit();
             }
             if (success) {
-                SharedPreferences.Editor editor = prefs.edit().remove(VOLUME + Uri.encode(id));
+                SharedPreferences.Editor editor = prefs.edit().remove(VOLUME + Uri.encode(id))
+                        .remove(GENRES + Uri.encode(id));
                 for (String key : keys) {
                     editor.remove(key);
                 }
@@ -341,6 +381,7 @@ public final class SoundProfileStore {
             main.post(() -> {
                 if (done) {
                     volumes.remove(id);
+                    genreFilters.remove(id);
                     for (String key : keys) {
                         profiles.remove(key);
                     }

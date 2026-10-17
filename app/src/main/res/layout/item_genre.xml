@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/genres_row_height"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingEnd="@dimen/space_16">
+
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/checked"
+        android:layout_width="@dimen/genres_checkbox_width"
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:focusable="false"
+        android:importantForAccessibility="no" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="?attr/paletteTextPrimary"
+            android:textSize="@dimen/settings_control_size" />
+
+        <TextView
+            android:id="@+id/hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/genres_untagged_hint"
+            android:visibility="gone"
+            android:textColor="?attr/paletteTextSecondary"
+            android:textSize="@dimen/genres_hint_size" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_16"
+        android:textColor="?attr/paletteTextSecondary"
+        android:textSize="@dimen/settings_label_size" />
+</LinearLayout>

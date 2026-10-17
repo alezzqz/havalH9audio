@@ -30,7 +30,7 @@
         <item name="android:statusBarColor">?attr/paletteBackground</item>
         <item name="android:navigationBarColor">?attr/paletteBackground</item>
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">shortEdges</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 
     <style name="Theme.HavalH9Music" parent="Base.Theme.HavalH9Music" />
@@ -42,6 +42,10 @@
         <item name="android:windowMinWidthMinor">1080dp</item>
         <item name="backgroundInsetStart">0dp</item>
         <item name="backgroundInsetEnd">0dp</item>
+    </style>
+
+    <style name="ThemeOverlay.HavalH9Music.GenreDialog" parent="ThemeOverlay.HavalH9Music.EqDialog">
+        <item name="android:windowSoftInputMode">stateAlwaysHidden|adjustResize</item>
     </style>
 
     <style name="Theme.HavalH9Music.Warm" parent="Theme.HavalH9Music">

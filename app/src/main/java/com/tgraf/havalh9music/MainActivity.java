@@ -64,6 +64,7 @@ import com.tgraf.havalh9music.model.SavedVolume;
 import com.tgraf.havalh9music.model.TrackEntity;
 import com.tgraf.havalh9music.model.UsbDevice;
 import com.tgraf.havalh9music.ui.BreadcrumbAdapter;
+import com.tgraf.havalh9music.ui.GenreFilterDialog;
 import com.tgraf.havalh9music.ui.ListDividerDecoration;
 import com.tgraf.havalh9music.ui.PlayerViewModel;
 import com.tgraf.havalh9music.ui.TrackAdapter;
@@ -242,6 +243,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         dialog.show();
+    }
+
+    private void updateGenreButton() {
+        PlayerViewModel.GenreState state = vm.getGenreState().getValue();
+        boolean filtered = state != null && state.selected != null;
+        b.btnGenres.setImageTintList(android.content.res.ColorStateList.valueOf(
+                AppearanceSettings.color(this,
+                filtered && Boolean.TRUE.equals(vm.getShuffle().getValue())
+                        ? R.attr.paletteAccent : R.attr.paletteIconInactive)));
+        b.btnGenres.setEnabled(state != null && !Boolean.TRUE.equals(vm.getScanning().getValue())
+                && !Boolean.TRUE.equals(vm.getDataBusy().getValue()));
     }
 
     private void showSavedVolumesDialog(boolean soundOnly) {
@@ -519,6 +531,7 @@ public class MainActivity extends AppCompatActivity {
         b.btnPlay.setOnClickListener(v -> vm.playPause());
         b.btnNext.setOnClickListener(v -> vm.next());
         b.btnShuffle.setOnClickListener(v -> vm.setShuffleMode(true));
+        b.btnGenres.setOnClickListener(v -> GenreFilterDialog.show(this, vm));
         b.btnSequential.setOnClickListener(v -> vm.setShuffleMode(false));
         b.btnPlaylist.setOnClickListener(v -> vm.jumpToCurrentTrack());
         b.btnEq.setOnClickListener(v -> showEqualizerDialog());
@@ -693,7 +706,11 @@ public class MainActivity extends AppCompatActivity {
         });
         vm.getCurrentTrack().observe(this, this::onCurrentTrack);
         // Подсветка кнопок режима: активна ровно одна (случайный / последовательный)
+        vm.getGenreState().observe(this, state -> updateGenreButton());
+        vm.getScanning().observe(this, scanning -> updateGenreButton());
+        vm.getDataBusy().observe(this, busy -> updateGenreButton());
         vm.getShuffle().observe(this, sh -> {
+            updateGenreButton();
             boolean shuffle = Boolean.TRUE.equals(sh);
             b.btnShuffle.setImageTintList(android.content.res.ColorStateList.valueOf(
                     AppearanceSettings.color(this,

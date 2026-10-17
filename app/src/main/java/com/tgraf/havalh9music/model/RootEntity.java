@@ -20,6 +20,7 @@ package com.tgraf.havalh9music.model;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
+import androidx.room.ColumnInfo;
 import androidx.room.PrimaryKey;
 
 /**
@@ -57,6 +58,9 @@ public class RootEntity {
      * Скан дошёл до конца: true — кэш полный и действителен.
      */
     public boolean complete;
+
+    @ColumnInfo(defaultValue = "0")
+    public int genreVersion;
 
     /**
      * Время последнего сканирования.

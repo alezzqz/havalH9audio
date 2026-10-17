@@ -11,7 +11,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace 'com.tgraf.havalh9music'
+    namespace = 'com.tgraf.havalh9music'
     // ГУ Haval — Android 9 (API 28): minSdk 28.
     // targetSdk 33 оставлен: на API 28 поведение не меняет, а на Android 13+
     // корректно запрашивает READ_MEDIA_AUDIO/POST_NOTIFICATIONS.
@@ -37,10 +37,10 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig = signingConfigs.release
             // AGP 9: вместо minifyEnabled/shrinkResources — optimization
             optimization {
-                enable true
+                enable = true
             }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             // ГУ использует ARM: библиотеку libFLAC для эмулятора в release не включаем.
@@ -54,8 +54,8 @@ android {
     }
 
     buildFeatures {
-        viewBinding true
-        buildConfig true
+        viewBinding = true
+        buildConfig = true
     }
 
     compileOptions {

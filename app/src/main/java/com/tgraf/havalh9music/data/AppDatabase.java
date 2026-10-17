@@ -23,6 +23,9 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
+import androidx.annotation.NonNull;
 
 import com.tgraf.havalh9music.model.RootEntity;
 import com.tgraf.havalh9music.model.TrackEntity;
@@ -30,13 +33,13 @@ import com.tgraf.havalh9music.model.TrackEntity;
 /**
  * База данных кэша иерархии флешки.
  * <p>
- * Схема v3: {@code root} — запись на том (PK volumeUuid) с флагом
- * {@code complete}; устаревшие поля (mtime корня, суммарный размер) убраны.
- * Приложение на стадии разработки и нигде не используется, поэтому смена
- * схемы выполняется destructive-миграцией: кэш просто пересоздаётся при
- * первом запуске новой версии.
+ * Схема v4: {@code root} — запись на том (PK volumeUuid) с флагом
+ * {@code complete} и версией чтения жанров. Миграция v3 → v4 сохраняет кэш;
+ * жанры старой библиотеки читаются только после ручного обновления.
+ * Для более старых схем без пути миграции кэш пересоздаётся при первом
+ * запуске новой версии; пользовательские настройки хранятся отдельно.
  */
-@Database(entities = {TrackEntity.class, RootEntity.class}, version = 3, exportSchema = false)
+@Database(entities = {TrackEntity.class, RootEntity.class}, version = 4, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     private static volatile AppDatabase instance;
@@ -54,6 +57,13 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "library.db")
                             .fallbackToDestructiveMigration()
+                            .addMigrations(new Migration(3, 4) {
+                                @Override
+                                public void migrate(@NonNull SupportSQLiteDatabase database) {
+                                    database.execSQL("ALTER TABLE root ADD COLUMN genreVersion"
+                                            + " INTEGER NOT NULL DEFAULT 0");
+                                }
+                            })
                             .build();
                 }
             }

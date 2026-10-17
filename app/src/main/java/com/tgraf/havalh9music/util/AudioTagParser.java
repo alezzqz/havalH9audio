@@ -33,10 +33,10 @@ import java.util.Locale;
  * файл ~0,5–1,5 с (нативная инициализация декодера), из-за чего скан
  * 1800 файлов занимал ~20 минут. Здесь читаем только заголовки:
  * <ul>
- *   <li>MP3 — ID3v2 (2.2/2.3/2.4: TIT2/TPE1/TALB/TRCK, latin1/utf16/utf8)
+ *   <li>MP3 — ID3v2 (2.2/2.3/2.4: TIT2/TPE1/TALB/TRCK/TCON, latin1/utf16/utf8)
  *       + ID3v1 в конце файла + Xing/VBRI/битрейт для длительности;</li>
  *   <li>FLAC — STREAMINFO (длительность из samples/sampleRate)
- *       + Vorbis Comment (TITLE/ARTIST/ALBUM/TRACKNUMBER).</li>
+ *       + Vorbis Comment (TITLE/ARTIST/ALBUM/TRACKNUMBER/GENRE).</li>
  * </ul>
  * Метод никогда не бросает исключений наружу: при любой ошибке возвращает
  * {@link Tags} с доступными полями (title/artist/album = null, durationMs = -1).
@@ -70,6 +70,7 @@ public final class AudioTagParser {
         public String title;
         public String artist;
         public String album;
+        public String genre;
         public int trackNumber;
         public long durationMs = -1;
     }
@@ -146,6 +147,9 @@ public final class AudioTagParser {
                     }
                     if (t.album == null) {
                         t.album = latin1(v1, 63, 30);
+                    }
+                    if (t.genre == null || t.genre.isEmpty()) {
+                        t.genre = GenreFilter.id3Name(v1[127] & 0xFF);
                     }
                     if (t.trackNumber == 0 && (v1[125] & 0xFF) != 0) {
                         t.trackNumber = v1[125] & 0xFF;
@@ -229,11 +233,16 @@ public final class AudioTagParser {
         }
         int enc = body[dataStart] & 0xFF;
         int textLen = len - 1;
-        String value = decode(body, dataStart + 1, textLen, enc);
+        boolean genre = "TCON".equals(id) || "TCO".equals(id);
+        String value = decode(body, dataStart + 1, textLen, enc, genre);
         if (value == null || value.isEmpty()) {
             return;
         }
         switch (id) {
+            case "TCON":
+            case "TCO":
+                t.genre = GenreFilter.merge(t.genre, GenreFilter.fromId3(value));
+                break;
             case "TIT2":
             case "TT2":
                 if (t.title == null) {
@@ -266,14 +275,20 @@ public final class AudioTagParser {
     /**
      * Декодирование текстового поля ID3v2 по коду кодировки.
      */
-    private static String decode(byte[] b, int off, int len, int enc) {
+    private static String decode(byte[] b, int off, int len, int enc, boolean multiple) {
         if (len <= 0) {
             return null;
         }
         // отрезаем хвостовые нули
         int n = len;
-        while (n > 0 && b[off + n - 1] == 0) {
-            n--;
+        if (enc == 1 || enc == 2) {
+            while (n >= 2 && b[off + n - 1] == 0 && b[off + n - 2] == 0) {
+                n -= 2;
+            }
+        } else {
+            while (n > 0 && b[off + n - 1] == 0) {
+                n--;
+            }
         }
         if (n <= 0) {
             return null;
@@ -305,7 +320,7 @@ public final class AudioTagParser {
         }
         // несколько значений в одном поле разделяются NUL — берём первое
         int nul = s.indexOf('\u0000');
-        if (nul >= 0) {
+        if (nul >= 0 && !multiple) {
             s = s.substring(0, nul);
         }
         s = s.trim();
@@ -578,6 +593,9 @@ public final class AudioTagParser {
                 continue;
             }
             switch (key) {
+                case "GENRE":
+                    t.genre = GenreFilter.merge(t.genre, val);
+                    break;
                 case "TITLE":
                     if (t.title == null) {
                         t.title = val;

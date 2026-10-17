@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <issue id="OldTargetApi">
+        <ignore path="build.gradle" />
+    </issue>
+    <issue id="GradleDependency">
+        <ignore path="build.gradle" />
+        <ignore path="../gradle/libs.versions.toml" />
+    </issue>
+    <issue id="DiscouragedApi,ExportedService">
+        <ignore path="src/main/AndroidManifest.xml" />
+    </issue>
+    <issue id="UseCompoundDrawables">
+        <ignore path="src/main/res/layout/item_breadcrumb.xml" />
+    </issue>
+    <issue id="InefficientWeight">
+        <ignore path="src/main/res/layout/dialog_genres.xml" />
+    </issue>
+    <issue id="Overdraw">
+        <ignore path="src/main/res/layout/settings_spinner_dropdown.xml" />
+    </issue>
+</lint>

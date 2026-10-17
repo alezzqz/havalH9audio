@@ -85,12 +85,7 @@
     <string name="settings_refresh">Обновить библиотеку</string>
     <string name="settings_apply">Применить</string>
     <string name="settings_cancel">Отмена</string>
-    <string name="sound_scope_general">Общие настройки</string>
-    <string name="sound_scope_folder">Для папки: %1$s</string>
     <string name="sound_bind_folder">Сохранять настройки для папки</string>
-    <string name="sound_root_folder">Корень накопителя</string>
-    <string name="sound_no_track">Выберите трек для настройки папки</string>
-    <string name="sound_folder_hint">Папка трека: %1$s</string>
     <string name="sound_save_error">Не удалось сохранить настройки звука. Повторите действие.</string>
     <string name="sound_clear_all">Удалить все настройки папок</string>
     <string name="sound_clear_confirm">Удалить настройки звука всех папок на всех накопителях? Общие настройки и именованные пресеты сохранятся.</string>
@@ -122,4 +117,17 @@
     <string name="sound_volume_delete_confirm">Удалить настройки эквалайзера и усиления для папок накопителя «%1$s»?\n\nОбщие настройки звука, именованные пресеты и библиотека сохранятся.</string>
     <string name="sound_volume_profiles_deleted">Настройки звука папок выбранного накопителя удалены</string>
     <string name="sound_profiles_deleting">Удаление настроек звука…</string>
+    <string name="genres_title">Жанры</string>
+    <string name="genres_search">Найти жанр</string>
+    <string name="genres_all">Все жанры</string>
+    <string name="genres_untagged">Без жанра</string>
+    <string name="genres_untagged_hint">Нет жанра в тегах или нет тегов</string>
+    <string name="genres_count">Подходит %1$d из %2$d треков</string>
+    <string name="genres_hint">Фильтр применяется только в режиме шафла</string>
+    <string name="genres_no_matches">Нет подходящих треков. Измените выбор жанров.</string>
+    <string name="genres_loading">Загрузка жанров…</string>
+    <string name="genres_refresh_needed">В старом кэше жанры не прочитаны. Обновите библиотеку этого накопителя.</string>
+    <string name="genres_refresh">Обновить библиотеку</string>
+    <string name="genres_refresh_confirm">Будет перечитана библиотека текущего накопителя. Воспроизведение остановится. Настройки звука и выбор жанров сохранятся.</string>
+    <string name="genres_apply">Применить</string>
 </resources>
