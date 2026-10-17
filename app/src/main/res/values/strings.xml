@@ -74,6 +74,9 @@
     <string name="playback_error_message">Не удалось воспроизвести трек. Проверьте доступность файла или выберите другой FLAC-декодер в настройках.</string>
     <string name="cd_settings">Настройки</string>
     <string name="settings_title">Настройки</string>
+    <string name="about_title">О программе</string>
+    <string name="about_message">%1$s\nВерсия %2$s (сборка %3$d)\n\nАудиопроигрыватель для головного устройства Haval H9. Поддержка MP3, FLAC и CUE.\n\nАвтор: TermoGRAF\n© 2026 TermoGRAF\n\nЛицензия: GNU LGPLv3. Программа распространяется свободно без каких-либо гарантий.\n\nКомпоненты: AndroidX и Media3 (ExoPlayer) — Apache 2.0; libFLAC — BSD-3-Clause.\n\nИсходный код и лицензия:\n%4$s</string>
+    <string name="about_repository" translatable="false">https://github.com/alezzqz/havalH9audio/</string>
     <string name="settings_decoder">FLAC-декодер</string>
     <string name="settings_decoder_loading">Поиск декодеров…</string>
     <string name="settings_panels">Расположение панелей</string>

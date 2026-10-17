@@ -30,6 +30,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -37,6 +39,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
 import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -199,6 +202,7 @@ public class MainActivity extends AppCompatActivity {
                                 (confirmation, which) -> vm.clearAllFolderSounds())
                         .show());
         settings.cancel.setOnClickListener(v -> dialog.dismiss());
+        settings.about.setOnClickListener(v -> showAboutDialog());
         settings.refresh.setOnClickListener(v -> {
             dialog.dismiss();
             if (hasReadPermission()) {
@@ -236,6 +240,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         dialog.show();
+    }
+
+    private void showAboutDialog() {
+        AlertDialog dialog = new PlayerDialogBuilder(this)
+                .setTitle(R.string.about_title)
+                .setMessage(getString(R.string.about_message, getString(R.string.app_name),
+                        BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE,
+                        getString(R.string.about_repository)))
+                .setPositiveButton(R.string.action_close, null)
+                .show();
+        TextView message = dialog.findViewById(android.R.id.message);
+        if (message != null) {
+            message.setTextIsSelectable(true);
+            message.setLinkTextColor(AppearanceSettings.color(this, R.attr.paletteAccent));
+            Linkify.addLinks(message, Linkify.WEB_URLS);
+            message.setMovementMethod(LinkMovementMethod.getInstance());
+        }
     }
 
     private void updateGenreButton() {
