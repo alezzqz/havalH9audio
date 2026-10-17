@@ -34,7 +34,6 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
 import android.widget.Toast;
@@ -44,7 +43,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
@@ -67,11 +65,11 @@ import com.tgraf.havalh9music.ui.BreadcrumbAdapter;
 import com.tgraf.havalh9music.ui.GenreFilterDialog;
 import com.tgraf.havalh9music.ui.ListDividerDecoration;
 import com.tgraf.havalh9music.ui.PlayerViewModel;
+import com.tgraf.havalh9music.ui.PlayerDialogBuilder;
 import com.tgraf.havalh9music.ui.TrackAdapter;
 import com.tgraf.havalh9music.util.AppearanceSettings;
 import com.tgraf.havalh9music.util.FlacDecoderSettings;
 import com.google.android.material.chip.Chip;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -171,13 +169,8 @@ public class MainActivity extends AppCompatActivity {
         settings.palette.setAdapter(settingsAdapter(java.util.Arrays.asList(
                 getString(R.string.settings_teal), getString(R.string.settings_warm))));
         settings.palette.setSelection(AppearanceSettings.warm(this) ? 1 : 0);
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this,
-                R.style.ThemeOverlay_HavalH9Music_EqDialog).setView(settings.getRoot())
+        AlertDialog dialog = new PlayerDialogBuilder(this).setView(settings.getRoot())
                 .create();
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(
-                    AppCompatResources.getDrawable(this, R.drawable.bg_eq_window));
-        }
         Runnable updateActions = () -> {
             boolean enabled = vm.isSoundReady()
                     && !Boolean.TRUE.equals(vm.getDataBusy().getValue());
@@ -198,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
         settings.savedVolumes.setOnClickListener(v -> showSavedVolumesDialog(false));
         settings.clearVolumeSounds.setOnClickListener(v -> showSavedVolumesDialog(true));
         settings.clearFolderSounds.setOnClickListener(v ->
-                new MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_HavalH9Music_EqDialog)
+                new PlayerDialogBuilder(this)
                         .setTitle(R.string.sound_clear_all)
                         .setMessage(R.string.sound_clear_confirm)
                         .setNegativeButton(R.string.action_cancel, null)
@@ -266,8 +259,7 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.item_saved_volume,
                 new ArrayList<>());
         saved.volumes.setAdapter(adapter);
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this,
-                R.style.ThemeOverlay_HavalH9Music_EqDialog).setView(saved.getRoot())
+        AlertDialog dialog = new PlayerDialogBuilder(this).setView(saved.getRoot())
                 .setNegativeButton(R.string.action_close, null).create();
         Observer<List<SavedVolume>> volumeObserver = list -> {
             volumes.clear();
@@ -307,7 +299,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             SavedVolume volume = volumes.get(position);
-            new MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_HavalH9Music_EqDialog)
+            new PlayerDialogBuilder(this)
                     .setTitle(soundOnly ? R.string.sound_volume_delete_title
                             : R.string.volume_delete_title)
                     .setMessage(soundOnly ? getString(R.string.sound_volume_delete_confirm,
@@ -792,7 +784,7 @@ public class MainActivity extends AppCompatActivity {
         if (isFinishing() || isDestroyed()) {
             return;
         }
-        new MaterialAlertDialogBuilder(this)
+        new PlayerDialogBuilder(this)
                 .setTitle(R.string.permission_needed_title)
                 .setMessage(R.string.permission_needed_msg)
                 .setPositiveButton(R.string.permission_open_settings, (d, w) -> {
@@ -848,7 +840,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showManageStorageDialog() {
-        new MaterialAlertDialogBuilder(this)
+        new PlayerDialogBuilder(this)
                 .setTitle(R.string.permission_manage_title)
                 .setMessage(R.string.permission_manage_msg)
                 .setPositiveButton(R.string.permission_open_settings, (d, w) -> {
@@ -961,9 +953,10 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < devices.size(); i++) {
             names[i] = devices.get(i).label;
         }
-        new MaterialAlertDialogBuilder(this)
+        new PlayerDialogBuilder(this)
                 .setTitle(R.string.usb_picker_title)
-                .setItems(names, (d, which) -> {
+                .setAdapter(new ArrayAdapter<>(this, R.layout.item_dialog_choice, names),
+                        (d, which) -> {
                     d.dismiss();
                     vm.selectUsbDevice(devices.get(which));
                 })
@@ -980,7 +973,7 @@ public class MainActivity extends AppCompatActivity {
         if (scanDialog != null && scanDialog.isShowing()) {
             return;
         }
-        scanDialog = new MaterialAlertDialogBuilder(this)
+        scanDialog = new PlayerDialogBuilder(this)
                 .setTitle(R.string.scanning_title)
                 .setMessage("")
                 .setCancelable(false)
@@ -1070,22 +1063,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this,
-                R.style.ThemeOverlay_HavalH9Music_EqDialog)
+        AlertDialog dialog = new PlayerDialogBuilder(this)
                 .setView(eq.getRoot())
                 .setCancelable(true)
                 .create();
-
-        // Заменяем фирменный фон окна Material (с бирюзовой тонировкой) на
-        // собственный фон с окантовкой: bg_eq_window рисует панель с контуром
-        // 1dp btn_border, а bg_eq_content на контенте закрывает её изнутри.
-        // getWindow() помечен @Nullable — на всякий случай проверяем (без окна
-        // диалог всё равно не показать, но NPE недопустим).
-        Window window = dialog.getWindow();
-        if (window != null) {
-            window.setBackgroundDrawable(
-                    AppCompatResources.getDrawable(this, R.drawable.bg_eq_window));
-        }
 
         eq.btnReset.setOnClickListener(v -> {
             vm.resetSoundBands();
@@ -1243,7 +1224,7 @@ public class MainActivity extends AppCompatActivity {
     private void showMissingFileDialog(TrackEntity t) {
         String name = t.displayName();
         String src = t.isCue ? t.cueSourceFile : t.path;
-        new MaterialAlertDialogBuilder(this)
+        new PlayerDialogBuilder(this)
                 .setTitle(R.string.error_missing_file_title)
                 .setMessage(getString(R.string.error_missing_file_message,
                         name, src == null ? "" : src))
@@ -1261,7 +1242,7 @@ public class MainActivity extends AppCompatActivity {
         if (isFinishing() || isDestroyed()) {
             return;
         }
-        new MaterialAlertDialogBuilder(this)
+        new PlayerDialogBuilder(this)
                 .setTitle(R.string.playback_error_title)
                 .setMessage(message)
                 .setPositiveButton(R.string.info_ok, null)
@@ -1294,7 +1275,7 @@ public class MainActivity extends AppCompatActivity {
         sb.append(getString(R.string.info_path)).append("\n")
                 .append(t.isCue ? t.cueSourceFile : t.path);
 
-        new MaterialAlertDialogBuilder(this)
+        new PlayerDialogBuilder(this)
                 .setTitle(R.string.track_info_title)
                 .setMessage(sb.toString())
                 .setPositiveButton(R.string.info_ok, null)

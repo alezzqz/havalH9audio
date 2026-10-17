@@ -3,11 +3,16 @@
      тонировки Material (убирает бирюзовую подложку), отступ 24dp как у штатного
      фона (чтобы контент окна не сдвигался). Скругление 37dp задаёт форму окна
      (клип decor) чуть свободнее окантовки контента 34dp, чтобы контур
-     не растушёвывался по углам. Сам контур рисует bg_eq_content -->
+     не растушёвывался по углам. Контур общий для всего окна, включая кнопки. -->
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
     android:inset="24dp">
-    <shape android:shape="rectangle">
-        <solid android:color="?attr/palettePanel" />
-        <corners android:radius="37dp" />
-    </shape>
+    <layer-list>
+        <item>
+            <shape android:shape="rectangle">
+                <solid android:color="?attr/palettePanel" />
+                <corners android:radius="37dp" />
+            </shape>
+        </item>
+        <item android:drawable="@drawable/bg_eq_content" />
+    </layer-list>
 </inset>

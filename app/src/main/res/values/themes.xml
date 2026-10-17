@@ -35,13 +35,48 @@
 
     <style name="Theme.HavalH9Music" parent="Base.Theme.HavalH9Music" />
 
-    <!-- Широкие диалоги для ГУ (эквалайзер): окно минимум 1080dp и без боковых
-         отступов Material, чтобы 6 полос по ~160dp помещались полностью -->
+    <!-- Общие размеры и типографика диалогов по образцу эквалайзера. -->
     <style name="ThemeOverlay.HavalH9Music.EqDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
-        <item name="android:windowMinWidthMajor">1080dp</item>
-        <item name="android:windowMinWidthMinor">1080dp</item>
+        <item name="android:windowMinWidthMajor">@dimen/dialog_min_width</item>
+        <item name="android:windowMinWidthMinor">@dimen/dialog_min_width</item>
         <item name="backgroundInsetStart">0dp</item>
         <item name="backgroundInsetEnd">0dp</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/HavalDialogTitle</item>
+        <item name="materialAlertDialogTitlePanelStyle">@style/HavalDialogTitlePanel</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/HavalDialogBody</item>
+        <item name="buttonBarPositiveButtonStyle">@style/HavalDialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/HavalDialogButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/HavalDialogButton</item>
+    </style>
+
+    <style name="HavalDialogTitle" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textSize">@dimen/settings_title_size</item>
+        <item name="lineHeight">@dimen/dialog_title_line_height</item>
+        <item name="android:lineHeight">@dimen/dialog_title_line_height</item>
+        <item name="android:textColor">?attr/paletteAccent</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="HavalDialogTitlePanel" parent="MaterialAlertDialog.Material3.Title.Panel">
+        <item name="android:paddingTop">@dimen/settings_padding</item>
+        <item name="android:paddingStart">@dimen/settings_padding</item>
+        <item name="android:paddingEnd">@dimen/settings_padding</item>
+    </style>
+
+    <style name="HavalDialogBody" parent="MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:textSize">@dimen/settings_label_size</item>
+        <item name="lineHeight">@dimen/dialog_body_line_height</item>
+        <item name="android:lineHeight">@dimen/dialog_body_line_height</item>
+        <item name="android:paddingStart">@dimen/space_12</item>
+        <item name="android:paddingEnd">@dimen/space_12</item>
+        <item name="android:textColor">?attr/paletteTextPrimary</item>
+    </style>
+
+    <style name="HavalDialogButton" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textSize">@dimen/settings_control_size</item>
+        <item name="android:textColor">?attr/paletteAccent</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:minHeight">@dimen/settings_field_height</item>
     </style>
 
     <style name="ThemeOverlay.HavalH9Music.GenreDialog" parent="ThemeOverlay.HavalH9Music.EqDialog">

@@ -42,6 +42,9 @@
     <dimen name="icon_chevron">14dp</dimen>
 
     <!-- Эквалайзер -->
+    <dimen name="dialog_min_width">1080dp</dimen>
+    <dimen name="dialog_title_line_height">40sp</dimen>
+    <dimen name="dialog_body_line_height">28sp</dimen>
     <dimen name="eq_column_width">134dp</dimen>
     <dimen name="eq_seek_h">340dp</dimen>
     <dimen name="eq_padding">36dp</dimen>

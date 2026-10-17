@@ -25,10 +25,8 @@ import android.widget.BaseAdapter;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.lifecycle.Observer;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.tgraf.havalh9music.R;
 import com.tgraf.havalh9music.databinding.DialogGenresBinding;
 import com.tgraf.havalh9music.databinding.ItemGenreBinding;
@@ -56,13 +54,9 @@ public final class GenreFilterDialog {
         this.activity = activity;
         this.vm = vm;
         binding = DialogGenresBinding.inflate(activity.getLayoutInflater());
-        dialog = new MaterialAlertDialogBuilder(activity,
+        dialog = new PlayerDialogBuilder(activity,
                 R.style.ThemeOverlay_HavalH9Music_GenreDialog)
                 .setView(binding.getRoot()).create();
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(
-                    AppCompatResources.getDrawable(activity, R.drawable.bg_eq_window));
-        }
     }
 
     public static void show(AppCompatActivity activity, PlayerViewModel vm) {
@@ -112,8 +106,7 @@ public final class GenreFilterDialog {
             }
         });
         binding.refresh.setOnClickListener(view ->
-                new MaterialAlertDialogBuilder(activity,
-                        R.style.ThemeOverlay_HavalH9Music_EqDialog)
+                new PlayerDialogBuilder(activity)
                         .setTitle(R.string.genres_refresh)
                         .setMessage(R.string.genres_refresh_confirm)
                         .setNegativeButton(R.string.action_cancel, null)
